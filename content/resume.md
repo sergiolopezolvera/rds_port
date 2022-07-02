@@ -16,6 +16,20 @@ systems and Data Science.
 # Experience
 
 
+* Research Intern | **Water, Forests and Watersheds Observatory for the State of Veracruz** | _09/2020 - current_
+
+  + Developed a research project to determine the economic value of the domestic use of water in the Pixquiac watershed, Veracruz, México.
+
+
+  + **Mined, cleaned, wrangled and analyzed** water quality and quantity data.
+
+
+  + Constructed a hydrological model of the watershed.
+
+
+  + Developed several **linear and logistic regression models** from fieldwork data.
+  
+  
 * Professor | **Colegio de Estudios Avanzados de Iberoamérica** | _04/2022 - current_
 
 
@@ -24,20 +38,6 @@ systems and Data Science.
 
   + Advise Coatepec municipality’s Ecology Commission on environmental
 management.
-
-
-* Research Intern | **Water, Forests and Watersheds Observatory for the State of Veracruz** | _09/2020 - current_
-
-  + Developed a research project to determine the economic value of the domestic use of water in the Pixquiac watershed, Veracruz, México.
-
-
-  + Mined, cleaned, wrangled and analyzed water quality and quantity data.
-
-
-  + Constructed a hydrological model of the watershed.
-
-
-  + Developed several linear and logistic regression models from fieldwork data.
 
 
 * Environmental Management Analyst | **Coatepec municipality** | _09/2019 - 09/2020_

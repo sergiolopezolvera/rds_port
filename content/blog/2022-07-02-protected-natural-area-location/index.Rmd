@@ -106,8 +106,8 @@ Then, coordinates in a tidy format where converted to spatial polygons. Such as 
 
 ```{r sp, echo=FALSE, warning=FALSE, message=FALSE}
 
- x_quinto <- quinto_tidy[1]
-  y_quinto <- quinto_tidy[2]
+ x_quinto <- quinto_tidy[2]
+  y_quinto <- quinto_tidy[1]
   poly_quin <- sp::Polygon(cbind(x_quinto, y_quinto))
   poly_quinto <- sp::Polygons(list(poly_quin), ID = "A")
   sp_quin <- sp::SpatialPolygons(list(poly_quinto), proj4string=CRS("+proj=utm +zone=14 +datum=WGS84 +units=m +no_defs"))
