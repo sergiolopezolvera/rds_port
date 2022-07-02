@@ -22,7 +22,7 @@ params:
     - python
     - stan
   progressively: no
-  sitename: Sergio López Olvera
+  sitename: Sergio López Olvera | Data Scientist
   uselatex: yes
 markup:
   goldmark:
