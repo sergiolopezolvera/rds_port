@@ -1,0 +1,64 @@
+---
+title: Protected Natural Area location
+author: Sergio Lopez Olvera
+date: '2022-07-02'
+slug: []
+categories:
+  - R
+tags:
+  - natural
+  - area
+  - ecology
+  - gis
+  - location
+  - map
+  - plot
+  - ggplot2
+  - cleaning
+  - wrangling
+  - parsing
+  - mining
+  - data
+  - pdf
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<div id="data-import" class="section level1">
+<h1>Data import</h1>
+<p>Imported a .pdf document from a mexican government website, splitted strings on “/n” and unlisted the items. Then detected the string “Página 50” to get to the page where the coordinates table begins. The document looks like below.</p>
+<pre><code>## [1] &quot;GACETA&quot;                                                                     
+## [2] &quot;  ÓRGANO DEL GOBIERNO DEL ESTADO DE VERACRUZ DE IGNACIO DE LA LLAVE&quot;        
+## [3] &quot;                                                                    OFICIAL&quot;
+## [4] &quot;                          DIRECTORA GENERAL DE LA EDITORA DE GOBIERNO&quot;      
+## [5] &quot;                                  ELVIRA VALENTINA ARTEAGA VEGA&quot;            
+## [6] &quot;                                   DIRECTORA DE LA GACETA OFICIAL&quot;</code></pre>
+</div>
+<div id="data-cleaning-and-wrangling" class="section level1">
+<h1>Data cleaning and wrangling</h1>
+<p>Cleaned and wrangled the data using string trimming, detecting and replacing into a tidy format tibble. The tibble below shows one of the polygons’ coordinates</p>
+<pre><code>## # A tibble: 6 x 2
+##        V2       V3
+##     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 715013. 2162971.
+## 2 715225. 2162877.
+## 3 715225. 2162877.
+## 4 715225. 2162877.
+## 5 715225. 2162877.
+## 6 715212. 2162846.</code></pre>
+</div>
+<div id="spatial-polygons-building" class="section level1">
+<h1>Spatial polygons building</h1>
+<p>Then, coordinates in a tidy format where converted to spatial polygons. Such as the one shown below</p>
+<pre><code>## class       : SpatialPolygons 
+## features    : 1 
+## extent      : 713003.3, 715731.1, 2160313, 2162994  (xmin, xmax, ymin, ymax)
+## crs         : +proj=utm +zone=14 +datum=WGS84 +units=m +no_defs</code></pre>
+</div>
+<div id="visualizing-spatial-polygon-in-a-map" class="section level1">
+<h1>Visualizing spatial polygon in a map</h1>
+<p>Such polygons were projected onto a map to visualize their spatial distribution. The map below shows the location of one of the seven polygons of the protected area.</p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/map-1.png" width="672" /></p>
+</div>

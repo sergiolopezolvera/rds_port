@@ -1,0 +1,131 @@
+---
+title: Protected Natural Area location
+author: Sergio Lopez Olvera
+date: '2022-07-02'
+slug: []
+categories:
+  - R
+tags:
+  - natural
+  - area
+  - ecology
+  - gis
+  - location
+  - map
+  - plot
+  - ggplot2
+  - cleaning
+  - wrangling
+  - parsing
+  - mining
+  - data
+  - pdf
+meta_img: images/image.png
+description: Description for the page
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(readr)
+library(pdftools)
+library(stringr)
+library(raster)
+library(rgdal)
+library(ggmap)
+library(broom)
+library(RColorBrewer)
+library(rgeos)
+library(sp)
+library(sf)
+```
+
+# Data import
+
+Imported a .pdf document from a mexican government website, splitted strings on "/n" and unlisted the items. Then detected the string "Página 50" to get to the page where the coordinates table begins. The document looks like below.
+
+```{r import, echo=FALSE, message=FALSE, warning=FALSE,}
+#Import file
+txt <- pdf_text("http://repositorio.veracruz.gob.mx/medioambiente/wp-content/uploads/sites/9/2018/02/Archipi%C3%A9lago-BS-region-capital_2015.pdf")
+
+txt1 <- str_split(txt, "\n") %>% unlist()
+head(txt1)
+```
+
+# Data cleaning and wrangling
+Cleaned and wrangled the data using string trimming, detecting and replacing into a tidy format tibble. The tibble below shows one of the polygons' coordinates
+
+```{r wrangling, echo=FALSE, warning=FALSE, message=FALSE}
+  quinto <- txt1[1569:1961]
+
+  not_ind_quinto <- quinto %>%
+    str_which("Página")
+  quinto <- quinto[-c(not_ind_quinto)]
+  
+  ind_quinto <- str_which(quinto, "\\d+")
+  quinto <- quinto[ind_quinto]
+  
+  quinto <- quinto %>%
+    str_replace("    ", " ") %>%
+    str_replace("   ", " ") %>%
+    str_replace("  ", " ") %>%
+    str_trim(side = "both")
+  
+  quinto <- quinto %>%
+    str_split("\\s(?=\\d{1,3}\\s)") %>%
+    unlist() %>%
+    str_replace("    ", " ") %>%
+    str_replace("   ", " ") %>%
+    str_replace("  ", " ") %>%
+    str_trim(side = "both")
+  
+  quinto <- quinto %>%
+    str_split(" ", simplify = TRUE) %>%
+    as.tibble
+  
+  quinto <- quinto %>%
+    mutate(V1 = as.numeric(V1), V2 = as.double(V2), V3 = as.double(V3)) %>%
+    arrange(V1) 
+  
+  quinto <- quinto[-(seq(2, 64, 2)),]
+  quinto <- quinto[-(seq(465, 1000, 1)),]
+  
+  quinto_tidy <- quinto[,2:3] %>% filter(!is.na(V2)&!is.na(V3))
+  
+  write.csv(quinto_tidy, "C:/Users/Sergio/projects/pixquiac/data/ANP/cuarto_t.csv")
+  
+  head(quinto_tidy)
+```
+
+# Spatial polygons building
+
+Then, coordinates in a tidy format where converted to spatial polygons. Such as the one shown below
+
+```{r sp, echo=FALSE, warning=FALSE, message=FALSE}
+
+ x_quinto <- quinto_tidy[1]
+  y_quinto <- quinto_tidy[2]
+  poly_quin <- sp::Polygon(cbind(x_quinto, y_quinto))
+  poly_quinto <- sp::Polygons(list(poly_quin), ID = "A")
+  sp_quin <- sp::SpatialPolygons(list(poly_quinto), proj4string=CRS("+proj=utm +zone=14 +datum=WGS84 +units=m +no_defs"))
+
+sp_quin
+```
+
+# Visualizing spatial polygon in a map
+
+Such polygons were projected onto a map to visualize their spatial distribution. The map below shows the location of one of the seven polygons of the protected area.
+
+```{r map, echo=FALSE, message=FALSE, warning=FALSE}
+  sp_quin %>%
+    ggplot(aes(lat, long)) +
+    geom_polygon(fill = "blue") +
+    labs(title = "Natural Protected Area location",
+         subtitle = "Fifth polygon",
+         x = "latitude",
+         y = "longitude")
+```
+

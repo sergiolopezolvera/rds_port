@@ -1,0 +1,180 @@
+---
+title: Water Availability
+author: Sergio Lopez Olvera
+date: '2022-07-02'
+slug: []
+categories:
+  - R
+tags:
+  - plot
+  - water
+  - availability
+  - wrangling
+  - cleaning
+  - tidy
+  - ggplot2
+meta_img: images/image.png
+description: Description for the page
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(readr)
+library(stringr)
+```
+
+# Data import
+
+Imported data from local databases related to water availability of three rivers in the watershed and water use permits. The next tibble is an example of the raw imported data.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+#read csv as tibble
+
+aforo_mp <- read_csv("Aforo_MedioPixquiac.csv")
+
+aforo_soco <- read_csv("Aforo_Socoyolapan.csv")
+
+aforo_cp <- read_csv("Aforo_CincoPalos.csv")
+
+aforo_mc <- read_csv("Aforo_Manantiales_Cofre.csv")
+
+```
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+
+head(aforo_mp)
+
+```
+
+# Data cleaning and wrangling
+
+Mutated and united some rows to format a date column as y/m/d, then binded some data frames for a visual comparative analysis. The next figure is the previous example after some wrangling.
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+#Aforos CMAS - Xalapa
+aforo_mp <- aforo_mp %>%
+  mutate(Dam = recode(Presa,
+                        "Pixquiac" = "Dam 1",
+                        "Socoyolapan" = "Dam 2",
+                        "Cinco Palos" = "Dam 3",
+                      "Cofre de Perote" = "Spring"),
+         Stream = recode(Aguas,
+                         "Arriba" = "Upstream",
+                         "Abajo" = "Downstream"),
+         Año = as.character(Año),
+         Mes = as.character(Mes),
+         Dia = "01") %>%
+  select(Dam, Stream, Gasto, Año, Mes, Dia) %>%
+  unite(Fecha, Año:Dia, sep = "/") %>%
+  mutate(Fecha = as.Date(Fecha))
+
+aforo_cp <- aforo_cp %>%
+  mutate(Dam = recode(Presa,
+                      "Pixquiac" = "Dam 1",
+                      "Socoyolapan" = "Dam 2",
+                      "Cinco Palos" = "Dam 3",
+                      "Cofre de Perote" = "Spring"),
+         Stream = recode(Aguas,
+                         "Arriba" = "Upstream",
+                         "Abajo" = "Downstream"),
+         Año = as.character(Año),
+         Mes = as.character(Mes),
+         Dia = "01") %>%
+  select(Dam, Stream, Gasto, Año, Mes, Dia) %>%
+  unite(Fecha, Año:Dia, sep = "/") %>%
+  mutate(Fecha = as.Date(Fecha))
+
+aforo_soco <- aforo_soco %>%
+  mutate(Dam = recode(Presa,
+                      "Pixquiac" = "Dam 1",
+                      "Socoyolapan" = "Dam 2",
+                      "Cinco Palos" = "Dam 3",
+                      "Cofre de Perote" = "Spring"),
+         Stream = recode(Aguas,
+                         "Arriba" = "Upstream",
+                         "Abajo" = "Downstream"),
+         Año = as.character(Año),
+         Mes = as.character(Mes),
+         Dia = "01") %>%
+  select(Dam, Stream, Gasto, Año, Mes, Dia) %>%
+  unite(Fecha, Año:Dia, sep = "/") %>%
+  mutate(Fecha = as.Date(Fecha))
+
+
+tres_aforos <- rbind(aforo_mp, aforo_cp, aforo_soco)
+
+gasto_mp <- aforo_mp %>%
+  pivot_wider(names_from = Stream, values_from = Gasto) %>%
+  mutate(Gasto = Upstream - Downstream) %>%
+  select(Dam, Fecha, Gasto)
+
+gasto_cp <- aforo_cp %>%
+  pivot_wider(names_from = Stream, values_from = Gasto) %>%
+  mutate(Gasto = Upstream - Downstream,) %>%
+  select(Dam, Fecha, Gasto)
+
+gasto_soco <- aforo_soco %>%
+  pivot_wider(names_from = Stream, values_from = Gasto) %>%
+  mutate(Gasto = Upstream - Downstream) %>%
+  select(Dam, Fecha, Gasto)
+
+gasto_mc <- aforo_mc %>%
+  mutate(Dam = recode(Presa,
+                      "Pixquiac" = "Dam 1",
+                      "Socoyolapan" = "Dam 2",
+                      "Cinco Palos" = "Dam 3"),
+         Año = as.character(Año),
+         Mes = as.character(Mes),
+         Dia = "01") %>%
+  select(Dam, Gasto, Año, Mes, Dia) %>%
+  unite(Fecha, Año:Dia, sep = "/") %>%
+  mutate(Fecha = as.Date(Fecha))%>%
+  select(Dam, Fecha, Gasto)
+
+cuatro_gastos <- rbind(gasto_mp, gasto_cp, gasto_soco, gasto_mc)
+```
+
+```{r, echo=FALSE}
+
+head(aforo_mp)
+
+```
+
+Constructed the next figure to visualize water availability in three dams before and after extraction for public use.
+
+```{r tres_aforos, echo=FALSE, message=FALSE, warning=FALSE}
+tres_aforos %>%
+  ggplot(aes(Fecha, Gasto, color = Stream)) +
+  geom_line() +
+  facet_grid(rows = vars(Dam)) +
+  labs(title = "Water volume in three dams",
+       subtitle = "From 2018 to 2020") +
+  scale_y_continuous(name = "Flux (l/s)") +
+  scale_x_date(name = "Date")
+
+```
+
+The previous figure helps observe that water availability after extraction during the dry months tends to zero. That causes severe problems to the rest ow the users that have no longer access to such water. It also shows a negative tendency on water volume even both before extraction.
+
+Given th problematic shown before, the next figure was constructed to determine if an increase in the volume of water extracted form the dams is the cause of the reduction on water availabilty.
+
+```{r cuatro_gastos, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+cuatro_gastos %>%
+  ggplot(aes(Fecha, Gasto)) +
+  geom_line() +
+  facet_grid(rows = vars(Dam)) +
+  labs(title = "Volume of extracted water from each dam",
+       subtitle = "From 2018 to 2020") +
+  scale_y_continuous(name = "Flux (l/s)") +
+  scale_x_date(name = "Date")
+
+```
+
+This last figure shows that there has not been a significant increase on water extraction. This suggests that the reduction on the volume of water availability may have a climatic cause.

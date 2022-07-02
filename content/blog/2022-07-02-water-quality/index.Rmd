@@ -1,0 +1,199 @@
+---
+title: Water quality
+author: Sergio Lopez Olvera
+date: '2022-07-02'
+slug: []
+categories:
+  - R
+tags:
+  - ggplot2
+  - cleaning
+  - tidy
+  - water
+  - wrangling
+  - plot
+  - quality
+meta_img: images/image.png
+description: Description for the page
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(readr)
+library(gridExtra)
+```
+
+# Data import
+
+Imported data from local databases related to water quality of three rivers in the watershed and mexican and international standards. The next tibble is an example of the raw imported data.
+
+```{r water quality, include=FALSE, message=FALSE}
+
+#Read as .csv
+
+cincopalos <- read_csv("cincopalos.csv")
+
+pixquiac <- read_csv("pixquiac.csv")
+
+socoyolapan <- read_csv("socoyolapan.csv")
+
+lmp <- read_csv("lmp.csv")
+
+oms <- read_csv("oms.csv")
+
+```
+```{r example, echo=FALSE}
+head(socoyolapan)
+```
+
+# Data cleaning and wrangling
+
+Pivoted some columns into rows , filtered out NAs, formatted dates into dmy, trimmed strings and replaces two or more white spaces with a single one. The next tibble is the previous example transformed into a tidy format.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Tidying cincopalos
+colnames(cincopalos) <- NULL
+colnames(cincopalos) <- cincopalos[1,]
+cincopalos <- cincopalos[-1,]
+colnames(cincopalos)[1] <- "Parametro"
+cincopalos <- cincopalos %>%
+  pivot_longer(!Parametro, names_to = "Fecha", values_to = "Value") %>%
+  mutate(Value = as.numeric(Value), Dam = "Dam 1") %>%
+  filter(Fecha != "NA" & Parametro != "NA" & Value != "NA") %>%
+  mutate(Date = dmy(Fecha)) %>% 
+  mutate(Parameter = str_trim(Parametro)) %>%
+  mutate(Parameter = str_replace_all(Parameter,"\\s+"," "))
+
+#Tidying pixquiac
+colnames(pixquiac) <- NULL
+colnames(pixquiac) <- pixquiac[1,]
+pixquiac <- pixquiac[-1,]
+colnames(pixquiac)[1] <- "Parametro"
+pixquiac <- pixquiac %>%
+  pivot_longer(!Parametro, names_to = "Fecha", values_to = "Value") %>%
+  mutate(Value = as.numeric(Value), Dam = "Dam 2") %>%
+  filter(Fecha != "NA" & Parametro != "NA" & Value != "NA") %>%
+  mutate(Date = dmy(Fecha)) %>% 
+  mutate(Parameter = str_trim(Parametro)) %>%
+  mutate(Parameter = str_replace_all(Parameter,"\\s+"," "))
+
+#Tidying socoyolapan
+colnames(socoyolapan) <- NULL
+colnames(socoyolapan) <- socoyolapan[1,]
+socoyolapan <- socoyolapan[-1,]
+colnames(socoyolapan)[1] <- "Parametro"
+socoyolapan <- socoyolapan %>%
+  pivot_longer(!Parametro, names_to = "Fecha", values_to = "Value") %>%
+  mutate(Value = as.numeric(Value), Dam = "Dam 3") %>%
+  filter(Fecha != "NA" & Parametro != "NA" & Value != "NA") %>%
+  mutate(Date = dmy(Fecha)) %>% 
+  mutate(Parameter = str_trim(Parametro)) %>%
+  mutate(Parameter = str_replace_all(Parameter,"\\s+"," "))
+
+#Tidying lmp and building lmp_num only for Parameters with a numeric limit
+colnames(lmp) <- NULL
+colnames(lmp) <- c("Parameter", "Units", "Limit")
+lmp[6,3] <- "9"
+lmp <- rbind(lmp, c("pH   In situ", "Adimensional", 9)) %>%
+  mutate(Limit = str_replace(Limit, ",", ".")) %>%
+  filter(Parameter != "NA")
+
+lmp_num <- lmp %>% 
+  mutate(Limit = as.numeric(Limit)) %>%
+  filter(Limit != "NA") %>%
+  mutate(Parameter = str_trim(Parameter), Units = str_trim(Units)) %>%
+  mutate(Parameter = str_replace_all(Parameter,"\\s+"," "), Units = str_replace_all(Units,"\\s+"," "))
+
+#Tidying oms only for Parameters with a numeric limit
+colnames(oms) <- c("Parameter", "Units", "Limit")
+para_oabbcc <- lmp %>% select(Parameter, Units)
+```
+
+```{r example_2, echo=FALSE, warning=FALSE}
+head(socoyolapan)
+```
+
+# Data visualization
+
+Binded the water quality data frames with the national and international standards to identify those pollutants which exceeded the limits.
+
+The next figure shows the pollutants that have exceeded the World Health Organization standards. To achieve that it was necessary to normalize data to a 0 to 1 scale and then transform the y axis to a log10 scale for readability.
+
+```{r oms, echo=FALSE, message=FALSE, warning=FALSE}
+#Compare pollutants concentration to WHO's límites recommendations
+
+#Normalize Data between 0 and 1 scale to compare against OMS recommendations
+#We will only consider those parameters with a numeric standard
+#Single faceted plot (if needed)
+#bind data frames together to make a single faceted plot (if needed)
+tres_presas <- rbind(cincopalos, pixquiac, socoyolapan) %>% 
+  mutate(Parameter = recode(Parameter,
+                            "Acidez total (como CaCO3)" = "Acidity",
+                            "Alcalinidad total (como CaCO3)" = "Alcalininity",
+                            "Cloruros (como ClNA)" = "Cloruros",
+                            "Dureza total (como CaCO3)" = "Hardnessl",
+                            "Fenol como compuestos fenólicos" = "Phenol",
+                            "Fluor (como FNA)" = "FNA",
+                            "Fósforo total (comoPO4)" = "PO4",
+                            "Nitratos (como NNANO3)" = "NANO3",
+                            "Nitritos (como NNANO2)" = "NANO2",
+                            "Solidos disueltos Totales (SDT)" = "SDT",
+                            "Sulfatos (SO4)" = "SO4",
+                            "Sustancias activas al Azul de metileno (Detergentes)" = "Detergents")) 
+
+oms %>% 
+  mutate(Parameter = recode(Parameter,
+                            "Nitratos (como NNANO3)" = "NANO3",
+                            "Nitritos (como NNANO2)" = "NANO2")) %>%
+  inner_join(tres_presas) %>%
+  mutate(Concentration = Value/Limit) %>%
+  group_by(Parameter, Dam) %>%
+  ggplot(aes(Date, Concentration, color = Parameter)) +
+  labs(title = "Pollutant concentration on three dams",
+       subtitle = "Against WHO recommendations",
+       caption = "Values were normalized to a 0 to 1 scale",
+       y = "Concentration (log10)",
+       x = "Date") +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_y_log10() +
+  facet_grid(rows = vars(Dam)) +
+  theme(legend.position = "bottom") +
+  annotate(geom = "text", x = as.Date("2019-11-27"), y = 2, label = "WHO") 
+
+```
+
+From the previous figure concluded that both Pb and Cd exceeded the WHO standards on several occasions
+
+Then coded a similar process to identify those pollutants that exceeded SEMARNAT`s ecological criteria for drinking water, as shown in the next figure.
+
+```{r cri-eco, echo=FALSE, message=FALSE, warning=FALSE}
+#Compare pollutants concentration to SEMARNAT's límites máximos permisibles
+
+#Normalize Data between 0 and 1 scale to compare against NOM-001-SEMARNAT-1996 standards
+
+#We will only consider those parameters with a numeric standard
+
+inner_join(tres_presas, lmp_num) %>%
+  mutate(Concentration = Value/Limit) %>%
+  group_by(Parameter, Dam) %>%
+  ggplot(aes(Date, Concentration, color = Parameter)) +
+  labs(title = "Pollutants concentration on three dams",
+       subtitle = "Against drinking water ecological criteria",
+       caption = "Values were normalized to a 0 to 1 scale",
+       y = "Concentration (log10)",
+       x = "Date") +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_y_log10() +
+  facet_grid(rows = vars(Dam)) +
+  theme(legend.position = "bottom") +
+  annotate(geom = "text", x = as.Date("2019-11-27"), y = 2, label = "Ecological criteria") 
+
+```
+
+The previous figure shows that Cd, HCN, Pb, Cr and fecal coliforms have exceeded the ecological criteria for drinking water.

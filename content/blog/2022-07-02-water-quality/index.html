@@ -1,0 +1,64 @@
+---
+title: Water quality
+author: Sergio Lopez Olvera
+date: '2022-07-02'
+slug: []
+categories:
+  - R
+tags:
+  - ggplot2
+  - cleaning
+  - tidy
+  - water
+  - wrangling
+  - plot
+  - quality
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<div id="data-import" class="section level1">
+<h1>Data import</h1>
+<p>Imported data from local databases related to water quality of three rivers in the watershed and mexican and international standards. The next tibble is an example of the raw imported data.</p>
+<pre><code>## # A tibble: 6 x 73
+##   Año          `2005...2` `2005...3` `2005...4` `2005...5` `2006...6` `2006...7`
+##   &lt;chr&gt;        &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;     
+## 1 Fecha        28/01/05   12/04/05   28/07/05   11/10/05   12/01/06   07/04/06  
+## 2 pH    In si~ 7.60       7.05       7.40       6.65       7.79       6.83      
+## 3 Temperatura~ 13.50      13.00      16.00      16.00      12.50      18.00     
+## 4 Temperatura~ &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       25.70      24.00     
+## 5 Materia Flo~ ausente    ausente    ausente    ausente    &lt;NA&gt;       &lt;NA&gt;      
+## 6 Olor         &lt;NA&gt;       ausente    ausente    ausente    &lt;NA&gt;       Inoloro   
+## # ... with 66 more variables: `2006...8` &lt;chr&gt;, `2006...9` &lt;chr&gt;,
+## #   `2007...10` &lt;chr&gt;, `2007...11` &lt;chr&gt;, `2007...12` &lt;chr&gt;, `2007...13` &lt;chr&gt;,
+## #   `2008...14` &lt;chr&gt;, `2008...15` &lt;chr&gt;, `2008...16` &lt;chr&gt;, `2008...17` &lt;chr&gt;,
+## #   `2009...18` &lt;chr&gt;, `2009...19` &lt;chr&gt;, `2009...20` &lt;chr&gt;, `2009...21` &lt;chr&gt;,
+## #   `2010...22` &lt;chr&gt;, `2010...23` &lt;chr&gt;, `2010...24` &lt;chr&gt;, `2010...25` &lt;chr&gt;,
+## #   `2011...26` &lt;chr&gt;, `2011...27` &lt;chr&gt;, `2011...28` &lt;chr&gt;, `2011...29` &lt;chr&gt;,
+## #   `2012...30` &lt;chr&gt;, `2012...31` &lt;chr&gt;, `2012...32` &lt;chr&gt;, ...</code></pre>
+</div>
+<div id="data-cleaning-and-wrangling" class="section level1">
+<h1>Data cleaning and wrangling</h1>
+<p>Pivoted some columns into rows , filtered out NAs, formatted dates into dmy, trimmed strings and replaces two or more white spaces with a single one. The next tibble is the previous example transformed into a tidy format.</p>
+<pre><code>## # A tibble: 6 x 6
+##   Parametro     Fecha    Value Dam   Date       Parameter 
+##   &lt;chr&gt;         &lt;chr&gt;    &lt;dbl&gt; &lt;chr&gt; &lt;date&gt;     &lt;chr&gt;     
+## 1 pH    In situ 28/01/05  7.6  Dam 3 2005-01-28 pH In situ
+## 2 pH    In situ 12/04/05  7.05 Dam 3 2005-04-12 pH In situ
+## 3 pH    In situ 28/07/05  7.4  Dam 3 2005-07-28 pH In situ
+## 4 pH    In situ 11/10/05  6.65 Dam 3 2005-10-11 pH In situ
+## 5 pH    In situ 12/01/06  7.79 Dam 3 2006-01-12 pH In situ
+## 6 pH    In situ 07/04/06  6.83 Dam 3 2006-04-07 pH In situ</code></pre>
+</div>
+<div id="data-visualization" class="section level1">
+<h1>Data visualization</h1>
+<p>Binded the water quality data frames with the national and international standards to identify those pollutants which exceeded the limits.</p>
+<p>The next figure shows the pollutants that have exceeded the World Health Organization standards. To achieve that it was necessary to normalize data to a 0 to 1 scale and then transform the y axis to a log10 scale for readability.</p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/oms-1.png" width="672" /></p>
+<p>From the previous figure concluded that both Pb and Cd exceeded the WHO standards on several occasions</p>
+<p>Then coded a similar process to identify those pollutants that exceeded SEMARNAT`s ecological criteria for drinking water, as shown in the next figure.</p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/cri-eco-1.png" width="672" /></p>
+<p>The previous figure shows that Cd, HCN, Pb, Cr and fecal coliforms have exceeded the ecological criteria for drinking water.</p>
+</div>

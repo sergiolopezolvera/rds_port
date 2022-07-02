@@ -1,0 +1,53 @@
+---
+title: Water Availability
+author: Sergio Lopez Olvera
+date: '2022-07-02'
+slug: []
+categories:
+  - R
+tags:
+  - plot
+  - water
+  - availability
+  - wrangling
+  - cleaning
+  - tidy
+  - ggplot2
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<div id="data-import" class="section level1">
+<h1>Data import</h1>
+<p>Imported data from local databases related to water availability of three rivers in the watershed and water use permits. The next tibble is an example of the raw imported data.</p>
+<pre><code>## # A tibble: 6 x 5
+##     Mes   Año Gasto Aguas  Presa   
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;   
+## 1     1  2018   434 Arriba Pixquiac
+## 2     2  2018   408 Arriba Pixquiac
+## 3     3  2018   316 Arriba Pixquiac
+## 4     4  2018   262 Arriba Pixquiac
+## 5     5  2018   239 Arriba Pixquiac
+## 6     6  2018   679 Arriba Pixquiac</code></pre>
+</div>
+<div id="data-cleaning-and-wrangling" class="section level1">
+<h1>Data cleaning and wrangling</h1>
+<p>Mutated and united some rows to format a date column as y/m/d, then binded some data frames for a visual comparative analysis. The next figure is the previous example after some wrangling.</p>
+<pre><code>## # A tibble: 6 x 4
+##   Dam   Stream   Gasto Fecha     
+##   &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt; &lt;date&gt;    
+## 1 Dam 1 Upstream   434 2018-01-01
+## 2 Dam 1 Upstream   408 2018-02-01
+## 3 Dam 1 Upstream   316 2018-03-01
+## 4 Dam 1 Upstream   262 2018-04-01
+## 5 Dam 1 Upstream   239 2018-05-01
+## 6 Dam 1 Upstream   679 2018-06-01</code></pre>
+<p>Constructed the next figure to visualize water availability in three dams before and after extraction for public use.</p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/tres_aforos-1.png" width="672" /></p>
+<p>The previous figure helps observe that water availability after extraction during the dry months tends to zero. That causes severe problems to the rest ow the users that have no longer access to such water. It also shows a negative tendency on water volume even both before extraction.</p>
+<p>Given th problematic shown before, the next figure was constructed to determine if an increase in the volume of water extracted form the dams is the cause of the reduction on water availabilty.</p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/cuatro_gastos-1.png" width="672" /></p>
+<p>This last figure shows that there has not been a significant increase on water extraction. This suggests that the reduction on the volume of water availability may have a climatic cause.</p>
+</div>
