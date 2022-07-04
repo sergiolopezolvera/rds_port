@@ -36,6 +36,9 @@ menu:
     - name: Resume
       url: /resume/
       weight: 2
+    - name: Certificates
+      url: /certificates/
+      weight: 4
     - name: GitHub
       url: https://github.com/sergiolopezolvera
       weight: 3
