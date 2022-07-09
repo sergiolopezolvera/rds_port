@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>area on Sergio Lopez Olvera | Data Scientist</title>
+    <link>https://sergiolopezolvera.netlify.app/tags/area/</link>
+    <description>Recent content in area on Sergio Lopez Olvera | Data Scientist</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 02 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://sergiolopezolvera.netlify.app/tags/area/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Protected Natural Area location</title>
+      <link>https://sergiolopezolvera.netlify.app/blog/2022-07-02-protected-natural-area-location/</link>
+      <pubDate>Sat, 02 Jul 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://sergiolopezolvera.netlify.app/blog/2022-07-02-protected-natural-area-location/</guid>
+      <description>Data importImported a .pdf document from a mexican government website, splitted strings on “/n” and unlisted the items. Then detected the string “Página 50” to get to the page where the coordinates table begins. The document looks like below.
+## [1] &amp;quot;GACETA&amp;quot; ## [2] &amp;quot; ÓRGANO DEL GOBIERNO DEL ESTADO DE VERACRUZ DE IGNACIO DE LA LLAVE&amp;quot; ## [3] &amp;quot; OFICIAL&amp;quot;## [4] &amp;quot; DIRECTORA GENERAL DE LA EDITORA DE GOBIERNO&amp;quot; ## [5] &amp;quot; ELVIRA VALENTINA ARTEAGA VEGA&amp;quot; ## [6] &amp;quot; DIRECTORA DE LA GACETA OFICIAL&amp;quot;Data cleaning and wranglingCleaned and wrangled the data using string trimming, detecting and replacing into a tidy format tibble.</description>
+    </item>
+    
+  </channel>
+</rss>

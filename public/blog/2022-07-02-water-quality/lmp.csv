@@ -1,0 +1,35 @@
+﻿pH    In situ,Adimensional,"5,0-9,0"
+Temperatura del Agua ,° C,"Condiciones naturales + 2,5"
+Temperatura del ambiente ,° C,Condiciones naturales
+Materia Flotante,***,Ausente
+Olor,AUSENTE,AUSENTE
+Conductividad ,microS/cm,No Especificada
+pH ,Adimensional,"5,0-9,0"
+Turbiedad UTN,NTU,Condiciones naturales
+Color,(Pt/Co),75
+Olor,AUSENTE,AUSENTE
+Conductividad (micro s/cm),microS/cm,No Especificada
+Solidos disueltos Totales (SDT),mg/L,500
+Acidez total (como CaCO3),mg/L,No Especificada
+Alcalinidad total (como CaCO3),mg/L,400
+Cloruros (como ClNA),mg/L,250
+Dureza total (como CaCO3),mg/L,No Especificada
+Nitratos (como NNANO3),mg/L,5
+Nitritos (como NNANO2),mg/L,"0,05"
+Fósforo total (comoPO4),mg/L,0.1
+Sulfatos (SO4),mg/L,500
+Fluor (como FNA),mg/L,"1,5"
+Sustancias activas al Azul de metileno (Detergentes),mg/L,"0,5"
+Fenol como compuestos fenólicos,mg/L,"0,3"
+Cadmio,mg/L,"0,01"
+Plomo,mg/L,"0,05"
+Cianuro ,mg/L,"0,02"
+Cobre ,mg/L,"2,0"
+Cromo ,mg/L,"0,05"
+Arsénico ,mg/L,"0,05"
+ Manganeso,mg/L,"0,1"
+Zinc,mg/L,"5,0"
+Fierro,mg/L,"0,3"
+Coliformes totales,NMP/100 ml,No Especificada
+Coliformes Fecales,NMP/100 ml,1000
+,,

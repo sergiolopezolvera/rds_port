@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>water on Sergio Lopez Olvera | Data Scientist</title>
+    <link>https://sergiolopezolvera.netlify.app/tags/water/</link>
+    <description>Recent content in water on Sergio Lopez Olvera | Data Scientist</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sat, 02 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://sergiolopezolvera.netlify.app/tags/water/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Water Availability</title>
+      <link>https://sergiolopezolvera.netlify.app/blog/2022-07-02-water-availability/</link>
+      <pubDate>Sat, 02 Jul 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://sergiolopezolvera.netlify.app/blog/2022-07-02-water-availability/</guid>
+      <description>Data importImported data from local databases related to water availability of three rivers in the watershed and water use permits. The next tibble is an example of the raw imported data.
+## # A tibble: 6 x 5## Mes Año Gasto Aguas Presa ## &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; ## 1 1 2018 434 Arriba Pixquiac## 2 2 2018 408 Arriba Pixquiac## 3 3 2018 316 Arriba Pixquiac## 4 4 2018 262 Arriba Pixquiac## 5 5 2018 239 Arriba Pixquiac## 6 6 2018 679 Arriba PixquiacData cleaning and wranglingMutated and united some rows to format a date column as y/m/d, then binded some data frames for a visual comparative analysis.</description>
+    </item>
+    
+    <item>
+      <title>Water quality</title>
+      <link>https://sergiolopezolvera.netlify.app/blog/2022-07-02-water-quality/</link>
+      <pubDate>Sat, 02 Jul 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://sergiolopezolvera.netlify.app/blog/2022-07-02-water-quality/</guid>
+      <description>Data importImported data from local databases related to water quality of three rivers in the watershed and mexican and international standards. The next tibble is an example of the raw imported data.
+## # A tibble: 6 x 73## Año `2005...2` `2005...3` `2005...4` `2005...5` `2006...6` `2006...7`## &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt; ## 1 Fecha 28/01/05 12/04/05 28/07/05 11/10/05 12/01/06 07/04/06 ## 2 pH In si~ 7.</description>
+    </item>
+    
+  </channel>
+</rss>

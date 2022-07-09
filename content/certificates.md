@@ -24,3 +24,5 @@ title: Certificates
 
 
 * [PH125.7x: Data Science: Linear Regression | **HarvardX**](https://courses.edx.org/certificates/3b9604c415654769a7f8917b88f43776)
+
+* [SQL for Data Science | **University of California Davis**](https://courses.edx.org/certificates/3b9604c415654769a7f8917b88f43776))
