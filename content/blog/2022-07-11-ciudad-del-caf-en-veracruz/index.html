@@ -1,0 +1,158 @@
+---
+title: Ciudad del café en Veracruz
+author: Sergio López Olvera
+date: '2022-07-11'
+slug: []
+categories:
+  - R
+tags:
+  - ggplot2
+  - map
+  - data
+  - cleaning
+  - gis
+  - location
+  - plot
+  - tidy
+  - wrangling
+  - mining
+  - coffe
+  - café
+  - veracruz
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<p>Siendo coatepecano, desde pequeño escuché a mis orgullosos conciudadanos mencionar que Coatepec era <strong>la</strong> <em>ciudad del café</em>. Algunos, inculso presumían de un reconocimiento internacional y declaraban que en Europa, Asia y el resto de América se hablaba de mi pequeña ciudad como de la capital del mundillo del café.</p>
+<p>Sin embargo, las numerosas fincas de café del viejo Coatepec han dado paso a cañales, modernos fraccionamientos y plaza comerciales. Este fenómeno sugiere que Coatepec tal vez ya no figure entre los grandes productores de café en el estado de Veracruz, lo que me hace plantear las siguientes preguntas:</p>
+<ul>
+<li>¿Existen nuevos coatepecanos que lleven la batuta del café en trincheras más alejadas de la finca y más cercanas al consumidor?</li>
+<li>¿Tenemos esperanza de mantener el mote de <em>ciudad del café</em> sin que se nos caiga la cara de vergüenza?</li>
+</ul>
+<p>Para resolver estas preguntas usaré los datos del <a href="https://www.inegi.org.mx/app/mapa/denue/default.aspx">DENUE</a> (Directorio Estadístico Nacional de Unidades Económicas) y los analizaré con la esperanza de encontrar las respuestas.</p>
+<div id="número-de-unidades-económicas-relacionadas-al-café-en-el-estado-de-veracruz" class="section level3">
+<h3>Número de unidades económicas relacionadas al café en el estado de Veracruz</h3>
+<pre class="r"><code>DENUE &lt;- read.csv(&quot;INEGI_DENUE_11072022.csv&quot;)
+
+#Seleccionando unidades dedicadas a elaboración y beneficio de café
+DENUE_uno &lt;- DENUE %&gt;%
+  dplyr::select(ID, &quot;Nombre&quot; = Nombre.de.la.Unidad.Económica,
+         &quot;Actividad&quot; = Nombre.de.clase.de.la.actividad,
+         &quot;Personal_ocupado&quot; =  Descripcion.estrato.personal.ocupado,
+         Municipio, &quot;CVE_MUN&quot; = Clave.municipio, Latitud, Longitud,
+         &quot;Fecha_DENUE&quot; = Fecha.de.incorporación.al.DENUE) %&gt;%
+  filter(Actividad %in% c(&quot;Elaboración de café tostado y molido&quot;,
+                          &quot;Elaboración de café instantáneo&quot;,
+                          &quot;Beneficio del café&quot;))
+
+#Seleccionando unidades que realizan otras actividades relacionadas al café          
+DENUE_dos &lt;- DENUE %&gt;%
+  dplyr::select(ID, &quot;Nombre&quot; = Nombre.de.la.Unidad.Económica,
+         &quot;Actividad&quot; = Nombre.de.clase.de.la.actividad,
+         &quot;Personal_ocupado&quot; =  Descripcion.estrato.personal.ocupado,
+         Municipio, &quot;CVE_MUN&quot; = Clave.municipio, Latitud, Longitud,
+         &quot;Fecha_DENUE&quot; = Fecha.de.incorporación.al.DENUE) %&gt;%
+  filter(Actividad %in% c(&quot;Fabricación de maquinaria y equipo para la industria alimentaria y de las bebidas&quot;,
+                          &quot;Elaboración de otras bebidas destiladas&quot;,
+                          &quot;Comercio al por mayor de otros alimentos&quot;,
+                          &quot;Comercio al por menor de otros alimentos&quot;,
+                          &quot;Cafeterías, fuentes de sodas, neverías, refresquerías y similares&quot;) &amp;
+           str_detect(Nombre, &quot;CAFE&quot;)) %&gt;% #Recodificando nombres para simplificarlos
+  mutate(Actividad = recode(Actividad, &quot;Fabricación de maquinaria y equipo para la industria alimentaria y de las bebidas&quot; = &quot;Fabricación de maquinaria y equipo&quot;,
+                            &quot;Cafeterías, fuentes de sodas, neverías, refresquerías y similares&quot; = &quot;Cafeterías y similares&quot;,
+                            &quot;Elaboración de otras bebidas destiladas&quot; = &quot;Cafeterías y similares&quot;,
+                            &quot;Comercio al por mayor de otros alimentos&quot; = &quot;Comercializadora&quot;,
+                            &quot;Comercio al por menor de otros alimentos&quot; = &quot;Comercializadora&quot;))
+#Uniendo ambos data frames
+
+DENUE_tres &lt;- rbind(DENUE_uno, DENUE_dos)
+
+#Resumiendo número de unidades por actividad
+
+D_tot &lt;- DENUE_tres %&gt;%
+  group_by(Actividad) %&gt;%
+  summarise(Numero = n()) %&gt;%
+  arrange(desc(Numero))</code></pre>
+<p>Considerando las actividades relacionadas al café registradas en el <a href="https://www.inegi.org.mx/app/mapa/denue/default.aspx">DENUE</a>, la figura siguiente muestra que en el estado de Veracruz existen 1095 cafeterías, 141 comercializadoras, 116 unidades dedicadas a la elaboración de café tostado y molido, 69 al beneficio del café, 8 a la fabricación de maquinaria y 7 a la elaboración de café instantáneo.</p>
+<pre class="r"><code>#Construyendo una figura
+
+DENUE_tres %&gt;%
+  group_by(Actividad) %&gt;%
+  summarise(Numero = n()) %&gt;%
+  ggplot(aes(Numero, Actividad, fill = Actividad)) + 
+  geom_col() +
+  theme(legend.position = &quot;none&quot;) +
+  labs(title = &quot;Actividades relacionadas al café&quot;,
+       subtitle = &quot;Unidades económicas en el estado de Veracruz&quot;,
+       x = &quot;Número&quot;) +
+  scale_y_discrete(limits = c(&quot;Elaboración de café instantáneo&quot;,
+                              &quot;Fabricación de maquinaria y equipo&quot;,
+                              &quot;Beneficio del café&quot;,
+                              &quot;Elaboración de café tostado y molido&quot;,
+                              &quot;Comercializadora&quot;,
+                              &quot;Cafeterías y similares&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+<div id="distribución-de-las-actividades-relacionadas-al-café-en-el-estado-de-veracruz" class="section level3">
+<h3>Distribución de las actividades relacionadas al café en el estado de Veracruz</h3>
+<p>Dichas actividades, como muestra el mapa siguiente se concentran principalmente en el centro del Estado de Veracruz, región geográfica que históricamente ha sido productora de café y en la cual se encuentra el municipio de Coatepec.</p>
+<pre class="r"><code>#Importando archivo .shp con los municipios del estado de Veracruz y convirtiendo clave a integer
+mun &lt;- read_sf(&quot;C:/Users/Sergio/projects/rds_port/content/blog/2022-07-11-ciudad-del-caf-en-veracruz/30mun.shp&quot;) %&gt;%
+  mutate(CVE_MUN = as.integer(CVE_MUN))
+
+#Uniendo data frame con información de DENUE con el poligonal de municipios y transformando a sf
+
+DENUE_geo &lt;- DENUE_tres %&gt;%
+  group_by(CVE_MUN) %&gt;%
+  summarize(Unidades = n()) %&gt;%
+  right_join(mun) %&gt;%
+  st_sf(sf_column_name = &quot;geometry&quot;)</code></pre>
+<pre><code>## Joining, by = &quot;CVE_MUN&quot;</code></pre>
+<pre class="r"><code>#Construyendo mapa graduado por Número de Unidades económicas
+
+DENUE_geo %&gt;%
+st_sf(sf_column_name = &quot;geometry&quot;) %&gt;%
+  ggplot() +
+  geom_sf(aes(fill = Unidades)) +
+  scale_fill_viridis_c(option = &quot;plasma&quot;, trans = &quot;sqrt&quot;) +
+  labs(title = &quot;Municipios con más unidades económicas relacionadas al café&quot;,
+       subtitle = &quot;En el estado de Veracruz&quot;,
+       caption = &quot;De acuerdo con DENUE (2022)
+       No se consideran las actividades agrícolas debido a la ausencia de información&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>#Tabla con unidades de Xalapa y Coatepec
+
+uni &lt;- DENUE_geo %&gt;%
+  filter(NOMGEO %in% c(&quot;Coatepec&quot;, &quot;Xalapa&quot;)) %&gt;%
+  dplyr::select(NOMGEO, Unidades)
+
+uni</code></pre>
+<pre><code>## Simple feature collection with 2 features and 2 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 3011986 ymin: 827615.4 xmax: 3044955 ymax: 854175
+## Projected CRS: MEXICO_ITRF_2008_LCC
+## # A tibble: 2 x 3
+##   NOMGEO   Unidades                                                     geometry
+##   &lt;chr&gt;       &lt;int&gt;                                           &lt;MULTIPOLYGON [m]&gt;
+## 1 Coatepec       93 (((3013109 845824.4, 3013130 845800.1, 3013151 845831.5, 30~
+## 2 Xalapa        269 (((3039279 854132.8, 3039264 853888, 3039258 853861.4, 3039~</code></pre>
+<p>Sin embargo, como muestra el segundo mapa, no es Coatepec el municipio con más Unidades Económicas (93) que realizan actividades relacionadas al café, sino Xalapa (269). Esto puede deberse a que la población de Xalapa es mucho más abundante y requieren de más establecimientos prestadores de servicios como las cafeterías (actividad con mayor número de unidades en este análisis).</p>
+<pre class="r"><code>#Construyendo mapa graduado por Número de Unidades económicas
+DENUE_geo %&gt;%
+  ggplot() +
+  geom_sf(aes(fill = Unidades)) +
+  scale_fill_viridis_c(option = &quot;plasma&quot;, trans = &quot;sqrt&quot;) +
+  coord_sf(xlim = c(3000000, 3150000), ylim = c(750000, 900000))+
+  labs(title = &quot;Municipios con más unidades económicas relacionadas al café&quot;,
+       subtitle = &quot;En el centro del estado de Veracruz&quot;,
+       caption = &quot;De acuerdo con DENUE (2022)
+       No se consideran las actividades agrícolas debido a la ausencia de información&quot;) +
+  annotate(geom = &quot;text&quot;,x = 3060000 ,y = 830000, label = &quot;Coatepec&quot;, colour = &quot;white&quot;) +
+  annotate(geom = &quot;text&quot;,x = 3055000 ,y = 850000, label = &quot;Xalapa&quot;, colour = &quot;white&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Si consideramos el tamaño de la población podemos encontrar el número de unidades económicas per cápita de cada municipio, también podríamos analizar la distribución de cada actividad específica. Por ejemplo: ¿qué municipio fabrica maquinaria para café?, ¿cuál cuenta con más beneficios) y ¿cuál concentra el mayor número de unidades registradas como tostadores?</p>
+<p>Si les interesa ahondar más en este tema coméntenlo y lo haré con gusto.</p>
+</div>
