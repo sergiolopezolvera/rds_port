@@ -148,7 +148,6 @@ st_sf(sf_column_name = "geometry") %>%
        subtitle = "En el estado de Veracruz",
        caption = "De acuerdo con DENUE (2022)
        No se consideran las actividades agrícolas debido a la ausencia de información")
-<<<<<<< HEAD
 
 #Tabla con unidades de Xalapa y Coatepec
 
@@ -160,11 +159,6 @@ uni
 ```
 
 Sin embargo, como muestra el segundo mapa, no es Coatepec el municipio con más Unidades Económicas (`r uni$Unidades[1]`) que realizan actividades relacionadas al café, sino Xalapa (`r uni$Unidades[2]`). Esto puede deberse a que la población de Xalapa es mucho más abundante y requieren de más establecimientos prestadores de servicios como las cafeterías (actividad con mayor número de unidades en este análisis).
-=======
-```
-
-Sin embargo, como muestra el segundo mapa, no es Coatepec el municipio con más Unidades Económicas que realizan actividades relacionadas al café, sino Xalapa. Esto puede deberse a que la población de Xalapa es mucho más abundante y requieren de más establecimientos prestadores de servicios como las cafeterías (actividad con mayor número de unidades en este análisis).
->>>>>>> 46e42cd9f5e7debc6f58a6c262cfb8b056ba576d
 
 ```{r}
 #Construyendo mapa graduado por Número de Unidades económicas
@@ -179,16 +173,9 @@ DENUE_geo %>%
        No se consideran las actividades agrícolas debido a la ausencia de información") +
   annotate(geom = "text",x = 3060000 ,y = 830000, label = "Coatepec", colour = "white") +
   annotate(geom = "text",x = 3055000 ,y = 850000, label = "Xalapa", colour = "white")
-<<<<<<< HEAD
-
-=======
->>>>>>> 46e42cd9f5e7debc6f58a6c262cfb8b056ba576d
 ```
 
 Si consideramos el tamaño de la población podemos encontrar el número de unidades económicas per cápita de cada municipio, también podríamos analizar la distribución de cada actividad específica. Por ejemplo: ¿qué municipio fabrica maquinaria para café?, ¿cuál cuenta con más beneficios) y ¿cuál concentra el mayor número de unidades registradas como tostadores?
 
-<<<<<<< HEAD
 Si les interesa ahondar más en este tema coméntenlo y lo haré con gusto.
-=======
-Si les interesa ahondar más en este tema coméntenlo y lo haré con gusto
->>>>>>> 46e42cd9f5e7debc6f58a6c262cfb8b056ba576d
+
