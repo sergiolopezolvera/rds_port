@@ -122,6 +122,7 @@ st_sf(sf_column_name = &quot;geometry&quot;) %&gt;%
        caption = &quot;De acuerdo con DENUE (2022)
        No se consideran las actividades agrícolas debido a la ausencia de información&quot;)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<<<<<<< HEAD
 <pre class="r"><code>#Tabla con unidades de Xalapa y Coatepec
 
 uni &lt;- DENUE_geo %&gt;%
@@ -140,6 +141,9 @@ uni</code></pre>
 ## 1 Coatepec       93 (((3013109 845824.4, 3013130 845800.1, 3013151 845831.5, 30~
 ## 2 Xalapa        269 (((3039279 854132.8, 3039264 853888, 3039258 853861.4, 3039~</code></pre>
 <p>Sin embargo, como muestra el segundo mapa, no es Coatepec el municipio con más Unidades Económicas (93) que realizan actividades relacionadas al café, sino Xalapa (269). Esto puede deberse a que la población de Xalapa es mucho más abundante y requieren de más establecimientos prestadores de servicios como las cafeterías (actividad con mayor número de unidades en este análisis).</p>
+=======
+<p>Sin embargo, como muestra el segundo mapa, no es Coatepec el municipio con más Unidades Económicas que realizan actividades relacionadas al café, sino Xalapa. Esto puede deberse a que la población de Xalapa es mucho más abundante y requieren de más establecimientos prestadores de servicios como las cafeterías (actividad con mayor número de unidades en este análisis).</p>
+>>>>>>> 46e42cd9f5e7debc6f58a6c262cfb8b056ba576d
 <pre class="r"><code>#Construyendo mapa graduado por Número de Unidades económicas
 DENUE_geo %&gt;%
   ggplot() +
@@ -154,5 +158,9 @@ DENUE_geo %&gt;%
   annotate(geom = &quot;text&quot;,x = 3055000 ,y = 850000, label = &quot;Xalapa&quot;, colour = &quot;white&quot;)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <p>Si consideramos el tamaño de la población podemos encontrar el número de unidades económicas per cápita de cada municipio, también podríamos analizar la distribución de cada actividad específica. Por ejemplo: ¿qué municipio fabrica maquinaria para café?, ¿cuál cuenta con más beneficios) y ¿cuál concentra el mayor número de unidades registradas como tostadores?</p>
+<<<<<<< HEAD
 <p>Si les interesa ahondar más en este tema coméntenlo y lo haré con gusto.</p>
+=======
+<p>Si les interesa ahondar más en este tema coméntenlo y lo haré con gusto</p>
+>>>>>>> 46e42cd9f5e7debc6f58a6c262cfb8b056ba576d
 </div>
