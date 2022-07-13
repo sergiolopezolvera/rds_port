@@ -1,0 +1,2119 @@
+---
+title: ¿A dónde se fueron las becas de CONACYT para posgrado entre 2014
+  y 2017?
+author: Sergio López Olvera
+date: '2022-07-13'
+slug: []
+categories:
+  - R
+tags:
+  - data
+  - ggplot2
+  - gis
+  - location
+  - map
+  - mining
+  - plot
+  - tidy
+  - becas
+  - español
+  - ciencia
+  - conacyt
+  - educacion
+  - posgrado
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<div id="motivación" class="section level1">
+<h1>Motivación</h1>
+<p>Como ex becario de CONACYT (en dos ocasiones) me pareció interesante averiguar como se distribuyen las Becas Nacionales de Posgrado en la población el territorio nacional y las instituciones de educación superior. HAce un par de días, vagando por la <a href="https://datos.gob.mx/">plataforma de Datos Abiertos del gobierno mexicano</a> me topé con el <a href="https://www.siicyt.gob.mx/index.php/estadisticas/bases-de-datos-abiertas">SIICYT</a> que es una plataforma de bases de datos abiertas sobre investigación científica, desarrollo tecnológico e innovación con <strong>muy pocos datos</strong> y un sistema de visualización que <strong>no funciona</strong> al menos en el momento en que se publicó este artículo.</p>
+<p>Por lo que el objetivo de este artículo es mostrar de la forma más amigable que me sea posible la información más relevante de las becas nacionales para posgrado otorgadas entre 2014 y 2017 (es lo único que hay) por CONACYT. Este es un análisis exploratorio bastante sencillo, pero si quieren que ahonde un poco más pueden comentarlo y lo haré con gusto.</p>
+<pre class="r"><code>Becas_14 &lt;- read.csv(&quot;Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2014.csv&quot;)
+Becas_15 &lt;- read.csv(&quot;Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2015.csv&quot;)
+Becas_16 &lt;- read.csv(&quot;Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2016.csv&quot;)
+Becas_17 &lt;- read.csv(&quot;Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2017.csv&quot;)</code></pre>
+<pre class="r"><code>Becas_14 &lt;- Becas_14 %&gt;%
+  dplyr::select(&quot;Area&quot; = AREA.DE.CONOCIMIENTO, &quot;Nivel&quot; = NIVEL,
+                &quot;Escuela&quot; = INSTITUCION.DESTINO, &quot;Estado&quot; = ENTIDAD.FEDERATIVA,
+                &quot;Sexo&quot; = GENERO) %&gt;% 
+  mutate(Año = 2014,
+         Sexo = recode(Sexo, &quot;F&quot; = &quot;Femenino&quot;, &quot;M&quot; = &quot;Masculino&quot;),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         &quot;Veracruz&quot; = &quot;Veracruz De Ignacio De La Llave&quot;,
+                         &quot;San Luis Potosi&quot; = &quot;San Luis Potosí&quot;,
+                         &quot;Distrito Federal&quot; = &quot;Ciudad De México&quot;,
+                         &quot;Estado De Mexico&quot; = &quot;México&quot;,
+                         &quot;Michoacan&quot; = &quot;Michoacán De Ocampo&quot;,
+                         &quot;Nuevo Leon&quot; = &quot;Nuevo León&quot;,
+                         &quot;Queretaro&quot; = &quot;Querétaro&quot;,
+                         &quot;Yucatan&quot; = &quot;Yucatán&quot;,
+                         &quot;Coahuila&quot; = &quot;Coahuila De Zaragoza&quot;))
+
+Becas_15 &lt;- Becas_15 %&gt;%
+  dplyr::select(&quot;Area&quot; = Área.de.Conocimiento, Nivel,
+                &quot;Escuela&quot; = Institución.Destino, &quot;Estado&quot; = Entidad.Federativa,
+                &quot;Sexo&quot; = Género) %&gt;% 
+  mutate(Año = 2015,
+         Sexo = recode(Sexo, &quot;F&quot; = &quot;Femenino&quot;, &quot;M&quot; = &quot;Masculino&quot;),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         &quot;Veracruz&quot; = &quot;Veracruz De Ignacio De La Llave&quot;,
+                         &quot;San Luis Potosi&quot; = &quot;San Luis Potosí&quot;,
+                         &quot;Distrito Federal&quot; = &quot;Ciudad De México&quot;,
+                         &quot;Estado De Mexico&quot; = &quot;México&quot;,
+                         &quot;Michoacan&quot; = &quot;Michoacán De Ocampo&quot;,
+                         &quot;Nuevo Leon&quot; = &quot;Nuevo León&quot;,
+                         &quot;Queretaro&quot; = &quot;Querétaro&quot;,
+                         &quot;Yucatan&quot; = &quot;Yucatán&quot;,
+                         &quot;Coahuila&quot; = &quot;Coahuila De Zaragoza&quot;))
+
+Becas_16 &lt;- Becas_16 %&gt;%
+  dplyr::select(&quot;Area&quot; = Área.de.Conocimiento, Nivel,
+                &quot;Escuela&quot; = Institución.Destino, &quot;Estado&quot; = Entidad.Federativa,
+                &quot;Sexo&quot; = Género) %&gt;% 
+  mutate(Año = 2016,
+         Sexo = recode(Sexo, &quot;F&quot; = &quot;Femenino&quot;, &quot;M&quot; = &quot;Masculino&quot;),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         &quot;Veracruz&quot; = &quot;Veracruz De Ignacio De La Llave&quot;,
+                         &quot;San Luis Potosi&quot; = &quot;San Luis Potosí&quot;,
+                         &quot;Distrito Federal&quot; = &quot;Ciudad De México&quot;,
+                         &quot;Estado De Mexico&quot; = &quot;México&quot;,
+                         &quot;Michoacan&quot; = &quot;Michoacán De Ocampo&quot;,
+                         &quot;Nuevo Leon&quot; = &quot;Nuevo León&quot;,
+                         &quot;Queretaro&quot; = &quot;Querétaro&quot;,
+                         &quot;Yucatan&quot; = &quot;Yucatán&quot;,
+                         &quot;Coahuila&quot; = &quot;Coahuila De Zaragoza&quot;))
+
+Becas_17 &lt;- Becas_17 %&gt;%
+  dplyr::select(&quot;Area&quot; = Área.de.Conocimiento, Nivel,
+                &quot;Escuela&quot; = Institución.Destino, &quot;Estado&quot; = Entidad.Federativa,
+                &quot;Sexo&quot; = Género) %&gt;% 
+  mutate(Año = 2017,
+         Sexo = recode(Sexo, &quot;F&quot; = &quot;Femenino&quot;, &quot;M&quot; = &quot;Masculino&quot;),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         &quot;Veracruz&quot; = &quot;Veracruz De Ignacio De La Llave&quot;,
+                         &quot;San Luis Potosi&quot; = &quot;San Luis Potosí&quot;,
+                         &quot;Distrito Federal&quot; = &quot;Ciudad De México&quot;,
+                         &quot;Estado De Mexico&quot; = &quot;México&quot;,
+                         &quot;Michoacan&quot; = &quot;Michoacán De Ocampo&quot;,
+                         &quot;Nuevo Leon&quot; = &quot;Nuevo León&quot;,
+                         &quot;Queretaro&quot; = &quot;Querétaro&quot;,
+                         &quot;Yucatan&quot; = &quot;Yucatán&quot;,
+                         &quot;Coahuila&quot; = &quot;Coahuila De Zaragoza&quot;))</code></pre>
+<pre class="r"><code>Becas &lt;- rbind(Becas_14, Becas_15, Becas_16, Becas_17)</code></pre>
+<div id="áreas-del-conocimiento" class="section level2">
+<h2>Áreas del conocimiento</h2>
+<p>CONACYT agrupa los programas de estudio e investigación en 7 áreas de conocimiento, algunas más populares que otras entre los becarios. Y aunque, como muestra esta figura, la popularidad de las áreas puede cambiar año con año, generalmente ingenierías, biotecnología y ciencias agropecuarías y humanidades y ciencias de la conducta son las más frecuentes entre las becas otorgadas por CONACYT.</p>
+<pre class="r"><code>Becas %&gt;%
+  group_by(Area, Año) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  pivot_wider(names_from = Año, values_from = Becas) %&gt;%
+  arrange(Area) %&gt;% .[-1,]</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Area&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 7 x 5
+## # Groups:   Area [7]
+##   Area                                     `2014` `2015` `2016` `2017`
+##   &lt;chr&gt;                                     &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;
+## 1 I. FISICO MATEMATICAS Y CS. DE LA TIERRA     62     64     90     51
+## 2 II. BIOLOGIA Y QUIMICA                      143    126    183    106
+## 3 III. MEDICINA Y CS. DE LA SALUD             157    215    190    140
+## 4 IV. HUMANIDADES Y CS. DE LA CONDUCTA        159    115    165    149
+## 5 V. CIENCIAS SOCIALES                        215    207    256    196
+## 6 VI. BIOTECNOLOGIA Y CS. AGROPECUARIAS       296    182    281    151
+## 7 VII. INGENIERIAS                            244    188    275    209</code></pre>
+<pre class="r"><code>Becas %&gt;%
+  group_by(Area, Año) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  .[-1,] %&gt;%
+  ggplot(aes(Año, Becas, color = Area)) +
+  geom_line() +
+  geom_point() +
+  labs(title = &quot;Becas para posgrado por área de conocimiento&quot;,
+       subtitle = &quot;Desde 2014 hasta 2017&quot;)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Area&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/Area-1.png" width="672" />
+Más de un factor puede influir en la distribución de las becas entre las áreas del conocimiento. Por ejemplo: las preferencias de los estudiantes, la oferta de las universidades y las prioridades de las políticas públicas nacionales que dictan las áreas de mayor interés para el desarrollo del país.</p>
+</div>
+<div id="grado-académico" class="section level2">
+<h2>Grado académico</h2>
+<p>Dentro del programa de Becas Nacionales, CONACYT considera estudios de especialidad, maestría y doctorado. La duración de estos programas puede variar según el plan desarrollado por las instituciones educativas que los imparten y el monto recibido por el becario depende del grado estudiado (doctorado &gt; maestría &gt; especialidad). La figura muestra que el grado al que más becas se otorgaron durante el periodo analizado es maestría, seguido por doctorado y finalmente especialidad.</p>
+<pre class="r"><code>Becas %&gt;%
+  group_by(Nivel, Año) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  pivot_wider(names_from = Año, values_from = Becas) %&gt;%
+  arrange(desc(Nivel)) %&gt;% .[-1,]</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Nivel&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 3 x 5
+## # Groups:   Nivel [3]
+##   Nivel     `2014` `2015` `2016` `2017`
+##   &lt;chr&gt;      &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;
+## 1 &quot;2. MAE&quot;     814    738    944    658
+## 2 &quot;1. DOC&quot;     371    274    352    239
+## 3 &quot;&quot;       1047291     NA     NA     NA</code></pre>
+<pre class="r"><code>Becas %&gt;%
+  group_by(Nivel, Año) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  .[-1,] %&gt;%
+  ggplot(aes(Año, Becas, fill = Nivel)) +
+  geom_col(position = &quot;dodge&quot;) +
+  labs(title = &quot;Becas para posgrado por grado académico&quot;,
+       subtitle = &quot;Desde 2014 hasta 2017&quot;)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Nivel&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/Nivel-1.png" width="672" />
+La diferencia entre la frecuencia en mastría y doctorado puede deberse a que haber obtenido el grado de maestría es un requisito para ingresar a la mayoría de los doctorados ofertados. Por otra parte, un rápido vistazo en el pronto difunto padrón nacional de posgrados de calidad demuestra que el grado con mayor oferta es el de maestría y aquel con menor oferta es el de especialidad.</p>
+</div>
+<div id="estados" class="section level2">
+<h2>Estados</h2>
+<p>Pero, ¿a dónde se van todos estos becarios? Principalmente a la Ciudad de México, como lo muestra el siguiente mapa.</p>
+<pre class="r"><code>est_becas &lt;- Becas %&gt;%
+  group_by(NOMGEO) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  arrange(NOMGEO) %&gt;% .[-1,]
+
+ent &lt;- read_sf(&quot;00ent.shp&quot;) %&gt;%
+  mutate(NOMGEO = str_to_title(NOMGEO))
+
+ent_geo &lt;- ent %&gt;%
+  left_join(est_becas) %&gt;%
+  st_sf(sf_column_name = &quot;geometry&quot;)</code></pre>
+<pre><code>## Joining, by = &quot;NOMGEO&quot;</code></pre>
+<pre class="r"><code>ent_geo %&gt;%
+  ggplot() +
+  geom_sf(aes(fill = Becas)) +
+  labs(title = &quot;Estados con más becas de CONACYT para posgrado&quot;,
+       subtitle = &quot;Entre 2014 y 2017&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/Estado-1.png" width="672" />
+Después de la capital del país, las siguientes entidades más pobladas son aquellas en las que estudiaron más becarios. Probablemente porque son también aquellas con más instituciones educativas y mayor oferta de programas. Por otra parte, Baja California y Yucatán son casos interesantes ya que a pesar de no ser estados tan poblados (número 11 y 22) recibieron un número de becarios considerable.</p>
+</div>
+<div id="sexo" class="section level2">
+<h2>Sexo</h2>
+<p>Según INEGI, en el año 2015, el 51.4% de la población mexicana era de sexo femenino y 48.6% de sexo masculino. Como se muestra en la siguiente figura, el otorgamiento de becas para estudios de posgrado en el periodo estudiado fue congruente con la distribución de sexo en la población mexicana.</p>
+<pre class="r"><code>Becas %&gt;%
+  group_by(Sexo, Año) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  pivot_wider(names_from = Año, values_from = Becas) %&gt;%
+  arrange(Sexo) %&gt;% .[-1,] </code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Sexo&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 2 x 5
+## # Groups:   Sexo [2]
+##   Sexo      `2014` `2015` `2016` `2017`
+##   &lt;chr&gt;      &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;
+## 1 Femenino     674    569    761    520
+## 2 Masculino    602    528    679    482</code></pre>
+<pre class="r"><code>Becas %&gt;%
+  group_by(Sexo, Año) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  .[-1,] %&gt;%
+  ggplot(aes(Año, Becas, fill = Sexo)) +
+  geom_col(position = &quot;dodge&quot;) +
+  labs(title = &quot;Becas para posgrado por sexo&quot;,
+       subtitle = &quot;Desde 2014 hasta 2017&quot;)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Sexo&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/Sexo-1.png" width="672" />
+Sin embargo, esto podría cambiar si analizaramos la proporción de becas otorgadas a cada sexo en las diferentes áreas de estudio, estados y universidades.</p>
+</div>
+<div id="institución-educativa" class="section level2">
+<h2>Institución educativa</h2>
+<p>Finalmente, ¿qué universidades o instituciones de educación superior recibieron el mayor número de becarios? Como se muestra en la última tabla, los resultados no soreprenden.</p>
+<pre class="r"><code>esc &lt;- Becas %&gt;%
+  group_by(Escuela) %&gt;%
+  summarise(Becas = n()) %&gt;%
+  .[-1,] %&gt;%
+  arrange(desc(Becas))
+
+knitr::kable(esc, 
+ caption = &quot;Becas otorgadas por institución educativa&quot;)</code></pre>
+<table>
+<caption><span id="tab:Escuela">Table 1: </span>Becas otorgadas por institución educativa</caption>
+<colgroup>
+<col width="92%" />
+<col width="7%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Escuela</th>
+<th align="right">Becas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">UNAM</td>
+<td align="right">684</td>
+</tr>
+<tr class="even">
+<td align="left">IPN</td>
+<td align="right">233</td>
+</tr>
+<tr class="odd">
+<td align="left">CINVESTAV</td>
+<td align="right">207</td>
+</tr>
+<tr class="even">
+<td align="left">U GUADALAJARA</td>
+<td align="right">177</td>
+</tr>
+<tr class="odd">
+<td align="left">UA NUEVO LEON</td>
+<td align="right">158</td>
+</tr>
+<tr class="even">
+<td align="left">UAM</td>
+<td align="right">130</td>
+</tr>
+<tr class="odd">
+<td align="left">BUAP</td>
+<td align="right">120</td>
+</tr>
+<tr class="even">
+<td align="left">UA BAJA CALIFORNIA</td>
+<td align="right">106</td>
+</tr>
+<tr class="odd">
+<td align="left">UA YUCATAN</td>
+<td align="right">95</td>
+</tr>
+<tr class="even">
+<td align="left">U VERACRUZANA</td>
+<td align="right">90</td>
+</tr>
+<tr class="odd">
+<td align="left">U GUANAJUATO</td>
+<td align="right">89</td>
+</tr>
+<tr class="even">
+<td align="left">UA SAN LUIS POTOSI</td>
+<td align="right">89</td>
+</tr>
+<tr class="odd">
+<td align="left">INIFAP</td>
+<td align="right">62</td>
+</tr>
+<tr class="even">
+<td align="left">COLPOS</td>
+<td align="right">59</td>
+</tr>
+<tr class="odd">
+<td align="left">UA SINALOA</td>
+<td align="right">59</td>
+</tr>
+<tr class="even">
+<td align="left">U MICH SNH</td>
+<td align="right">58</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL INFANTIL DE MEXICO DR. FEDERICO GOMEZ</td>
+<td align="right">54</td>
+</tr>
+<tr class="even">
+<td align="left">CIESAS</td>
+<td align="right">53</td>
+</tr>
+<tr class="odd">
+<td align="left">ECOSUR</td>
+<td align="right">49</td>
+</tr>
+<tr class="even">
+<td align="left">UA EDO MEXICO</td>
+<td align="right">49</td>
+</tr>
+<tr class="odd">
+<td align="left">COLMEX</td>
+<td align="right">48</td>
+</tr>
+<tr class="even">
+<td align="left">UA NAYARIT</td>
+<td align="right">48</td>
+</tr>
+<tr class="odd">
+<td align="left">CIAD</td>
+<td align="right">47</td>
+</tr>
+<tr class="even">
+<td align="left">UA EDO MORELOS</td>
+<td align="right">47</td>
+</tr>
+<tr class="odd">
+<td align="left">UA QUERETARO</td>
+<td align="right">47</td>
+</tr>
+<tr class="even">
+<td align="left">UA EDO HIDALGO</td>
+<td align="right">43</td>
+</tr>
+<tr class="odd">
+<td align="left">CIBNOR</td>
+<td align="right">42</td>
+</tr>
+<tr class="even">
+<td align="left">U SONORA</td>
+<td align="right">42</td>
+</tr>
+<tr class="odd">
+<td align="left">CICESE</td>
+<td align="right">40</td>
+</tr>
+<tr class="even">
+<td align="left">INECOL</td>
+<td align="right">39</td>
+</tr>
+<tr class="odd">
+<td align="left">UA ZACATECAS</td>
+<td align="right">39</td>
+</tr>
+<tr class="even">
+<td align="left">COLEF</td>
+<td align="right">37</td>
+</tr>
+<tr class="odd">
+<td align="left">ITESM</td>
+<td align="right">36</td>
+</tr>
+<tr class="even">
+<td align="left">CIO</td>
+<td align="right">35</td>
+</tr>
+<tr class="odd">
+<td align="left">UA CHAPINGO</td>
+<td align="right">31</td>
+</tr>
+<tr class="even">
+<td align="left">UA CIUDAD JUAREZ</td>
+<td align="right">31</td>
+</tr>
+<tr class="odd">
+<td align="left">CIMAV</td>
+<td align="right">30</td>
+</tr>
+<tr class="even">
+<td align="left">CIATEJ</td>
+<td align="right">28</td>
+</tr>
+<tr class="odd">
+<td align="left">U COLIMA</td>
+<td align="right">28</td>
+</tr>
+<tr class="even">
+<td align="left">UA TLAXCALA</td>
+<td align="right">28</td>
+</tr>
+<tr class="odd">
+<td align="left">INAOE</td>
+<td align="right">26</td>
+</tr>
+<tr class="even">
+<td align="left">IMSS</td>
+<td align="right">24</td>
+</tr>
+<tr class="odd">
+<td align="left">UA AGUASCALIENTES</td>
+<td align="right">24</td>
+</tr>
+<tr class="even">
+<td align="left">CICY</td>
+<td align="right">23</td>
+</tr>
+<tr class="odd">
+<td align="left">IPICYT</td>
+<td align="right">23</td>
+</tr>
+<tr class="even">
+<td align="left">U CIENCIAS Y ARTES CHIAPAS</td>
+<td align="right">22</td>
+</tr>
+<tr class="odd">
+<td align="left">U QUINTANA ROO</td>
+<td align="right">22</td>
+</tr>
+<tr class="even">
+<td align="left">UA CHIAPAS</td>
+<td align="right">21</td>
+</tr>
+<tr class="odd">
+<td align="left">UA CHIHUAHUA</td>
+<td align="right">21</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL GENERAL DR. MANUEL GEA GONZALEZ</td>
+<td align="right">20</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL INFANTIL DE MEXICO FEDERICO GOMEZ</td>
+<td align="right">19</td>
+</tr>
+<tr class="even">
+<td align="left">INAH</td>
+<td align="right">19</td>
+</tr>
+<tr class="odd">
+<td align="left">INNSZ</td>
+<td align="right">19</td>
+</tr>
+<tr class="even">
+<td align="left">IT SONORA</td>
+<td align="right">19</td>
+</tr>
+<tr class="odd">
+<td align="left">IT DURANGO</td>
+<td align="right">18</td>
+</tr>
+<tr class="even">
+<td align="left">INSP</td>
+<td align="right">17</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE NEUROLOGIA Y NEUROCIRUGIA MANUEL VELASCO SUAREZ</td>
+<td align="right">17</td>
+</tr>
+<tr class="even">
+<td align="left">IT TIJUANA</td>
+<td align="right">17</td>
+</tr>
+<tr class="odd">
+<td align="left">CIQA</td>
+<td align="right">16</td>
+</tr>
+<tr class="even">
+<td align="left">COLMICH</td>
+<td align="right">16</td>
+</tr>
+<tr class="odd">
+<td align="left">MORA</td>
+<td align="right">16</td>
+</tr>
+<tr class="even">
+<td align="left">U JUAREZ EDO DURANGO</td>
+<td align="right">16</td>
+</tr>
+<tr class="odd">
+<td align="left">UA CAMPECHE</td>
+<td align="right">16</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE PEDIATRIA</td>
+<td align="right">15</td>
+</tr>
+<tr class="odd">
+<td align="left">UA BAJA CALIFORNIA SUR</td>
+<td align="right">15</td>
+</tr>
+<tr class="even">
+<td align="left">UA COAHUILA</td>
+<td align="right">15</td>
+</tr>
+<tr class="odd">
+<td align="left">IT CELAYA</td>
+<td align="right">14</td>
+</tr>
+<tr class="even">
+<td align="left">UA TAMAULIPAS</td>
+<td align="right">14</td>
+</tr>
+<tr class="odd">
+<td align="left">CIMAT</td>
+<td align="right">13</td>
+</tr>
+<tr class="even">
+<td align="left">INCAN</td>
+<td align="right">13</td>
+</tr>
+<tr class="odd">
+<td align="left">ININ</td>
+<td align="right">13</td>
+</tr>
+<tr class="even">
+<td align="left">IT VERACRUZ</td>
+<td align="right">13</td>
+</tr>
+<tr class="odd">
+<td align="left">UA BENITO JUAREZ OAXACA</td>
+<td align="right">13</td>
+</tr>
+<tr class="even">
+<td align="left">UA GUERRERO</td>
+<td align="right">13</td>
+</tr>
+<tr class="odd">
+<td align="left">UIA</td>
+<td align="right">13</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE CARDIOLOGIA</td>
+<td align="right">12</td>
+</tr>
+<tr class="odd">
+<td align="left">UA DEL CARMEN</td>
+<td align="right">12</td>
+</tr>
+<tr class="even">
+<td align="left">IMP</td>
+<td align="right">11</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO MEXICANO DE TECNOLOGIA DEL AGUA</td>
+<td align="right">11</td>
+</tr>
+<tr class="even">
+<td align="left">IT ORIZABA</td>
+<td align="right">11</td>
+</tr>
+<tr class="odd">
+<td align="left">SECRETARIA DE SALUD</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">U JUAREZ AUT TABASCO</td>
+<td align="right">10</td>
+</tr>
+<tr class="odd">
+<td align="left">UPN</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">CENIDET</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE INVESTIGACIONES BIOLOGICAS</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left">COLSAN</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left">SAGARPA</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left">UA CIUDAD DE MEXICO</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO MEXICANO DEL TRANSPORTE</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">IT TEPIC</td>
+<td align="right">8</td>
+</tr>
+<tr class="odd">
+<td align="left">U DE LA SALLE</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">U JUAREZ EDO TABASCO</td>
+<td align="right">8</td>
+</tr>
+<tr class="odd">
+<td align="left">UA GUADALAJARA</td>
+<td align="right">8</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL GENERAL DE MEXICO</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left">IT TUXTLA GUTIERREZ</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left">SOFTEK GLOBAL EDESIGN</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left">UA AGR A. NARRO</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO NACIONAL DE METROLOGIA-CENAM</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">CIDE</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">INMEGEN</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE ELECTRICIDAD Y ENERGIAS LIMPIAS-INEEL</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE PSIQUIATRIA</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">IT MERIDA</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">U DEL MAR</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">UDLAP</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">UP CHIAPAS</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">UPAEP</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">UT LA MIXTECA</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO GUESTALTICO DE ENSEÑANZA EN TERAPIA INFANTIL Y ADOLESCENTE</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">CIDESI</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">FLACSO</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">INBA</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">INER</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO JALISCIENSE DE CIENCIAS FORENSES</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">IT LEON</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">TECNOLOGIAS EOS</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="left">U PAPALOAPAN</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">COLSON</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">INAPESCA</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">INEGI</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE CIENCIAS MEDICAS Y NUTRICION</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">IT BOCA DEL RIO</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">IT TLAJOMULCO</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">ITAM</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">LANIA</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">SECRETARIA DE SALUD</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">SEMARNAT</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">U ESTATAL SONORA</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">UA CIUDAD MEXICO</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">UDLA</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">UIA-PUEBLA</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">UP PACHUCA</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">UP SINALOA</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE INVESTIGACION DE CHIAPAS</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE INVESTIGACIONES Y DESAROLLO CONDUMEX</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO JURIDICO UNIVERSITARIO</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">CETYS</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">CIDETEQ</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">COLMEXIQUENSE</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">COMPLEJO AGRICOLA NUEVO LEON UNIDO</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">CONSEJO PUEBLA DE LECTURA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">FUNDACION HOSPITAL NUESTRA SEÑORA DE LA LUZ</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">GRUPO UNO EL PRADO SPR</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL DE ONGOLOGIA C.M.N. SIGLO XXI</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">INFOTEC</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO DE INVESTIGACIONES CIENTIFICAS</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE CANCEROLOGIA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE GERIATRIA</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE PERINATOLOGIA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">IT AGUASCALIENTES</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">IT LA LAGUNA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">IT MORELIA</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">OAXACA AEROSPACE</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">OPERADORA HOTELERA LAS BRISAS</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">PROBAYES AMERICAS</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">SISTEMAS AUTOMOTRICES DE MEXICO</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">UA HIDALGO</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">UIA-PFAN</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">BERRYMEX</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE ESPECIALIDADES MEDICAS DEL ESTADO DE VERACRUZ DR. RAFAEL LUCIO</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE INVESTIGACION Y DESARROLLO DE LOS RECURSOS NATURALES DE SONORA</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO NACIONAL DE INVESTIGACION EN FISIOLOGIA Y MEJORAMIENTO ANIMAL</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO REGIONAL DE INVESTIGACION PESQUERA-SEMARNAP</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO TURISTICO HACIENDA MAZATEPEC</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CHOICE HOTELS MEXICO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CIATEQ</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CIIDET</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">COMISION DE DERECHOS HUMANOS DEL ESTADO DE MEXICO</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">COMITÉ ESTATAL DE SANIDAD ACUÍCOLA DE YUCATÁN</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CONACULTA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CONSULTORES EN PROCESOS E INGENIERÍA DE SOFTWARE</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">DISTRIBUCION Y VENTAS</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">DORADOS CONVENTIONS &amp; RESORT</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">DRISCOLL’S-JALISCO</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">FLACSO-PFAN</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">GIANT MOTORS LATINOAMERICA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">GOBIERNO DEL ESTADO DE CHIAPAS</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL CIVIL DE GUADALAJARA DR. JUAN I. MENCHACA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL GENERAL DE CHIHUAHUA DR. SALVADOR ZUBIRAN ANCHONDO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">IDGREEN</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">INNOVATION MANAGEMENT AND SUSTAINABLE TECHNOLOGIES</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">INPER</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO DE CIENCIAS FORENSES</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO DE INVESTIGACION, CAPACITACIÓN Y PSICOTERAPIA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO DE OFTALMOLOGIA CONDE DE VALENCIANA</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO DE PSICOTERAPIA SISTEMICA HUMANISTA Y SEXUALIDAD VAMIHA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO MEXICANO DEL SEGURO SOCIAL-IMSS</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE ENFERMEDADES RESPIRATORIAS</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE MEDICINA DE REHABILITACION-INR</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">ISSSTE</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">IT BOCA DE RIO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">IT CHIHUAHUA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">IT CIUDAD MADERO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">IT ENSENADA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">IT OAXACA</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">IT QUERETARO</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">IT SUPERIOR MULEGE</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">IT ZACATEPEC</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">ITESO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">LASFALTO</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">MABE</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">MANUFACTURERA DE CIGUENALES DE MEXICO</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">MIRACLE BUSINESS NETWORK</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">OBSERVATORIO URBANO DE LEON</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">PRIMARIA MELCHOR OCAMPO MARAVATIO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">PRODUT CASTING</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">SECRETARIA DE MEDIO AMBIENTE Y RECURSOS NATURALES</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">SEDENA</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">SEMMATERIALS MEXICO</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">SEP</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">UA COAHUILA-PFAN</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">UNIDAD DE INVESTIGACION EPIDEMIOLOGICA Y EN SERVICIOS DE SALUD</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">VOLTRAN</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">ADRIANNS DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">AFRICAN SAFARI</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">AGENCIA ALEMANA DE COOPERACION TECNICA-GIZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">AGRICOLA MEXICANA DE SEMILLAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">AGROMOD</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ALTOS HORNOS DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">AMIGOS DE SIAN KA’AN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">APS AVALUOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ASOCIACION CIVIL U YOOCHE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ASOCIACION HISPANO MEXICANA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ASOCIACION MEXICANA DE ESTUDIOS DEL CARIBE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">AYUNTAMIENTO CONSTITUCIONAL DE ZONGOLICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">AYUNTAMIENTO DE TLACOLULA DE MATAMOROS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">AYUNTAMIENTO DEL MUNICIPIO DE PUEBLA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">AYUNTAMIENTO MUNICIPAL DE TEXCOCO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">BRISAS HOTEL COLLECTION</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CASONA 8</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENAM</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRAL CAMPESINA INDEPENDIENTE FEDERACION VERACRUZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE ANALISIS DE CICLO DE VIDA Y DISEÑO SUSTENTABLE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE APLICACION Y ENSEÑANZA GEOESPACIAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE DERECHOS HUMANOS DE LA MONTANA TLACHINOLLAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE DERECHOS HUMANOS FRAY BARTOLOME DE LAS CASAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE DERECHOS HUMANOS FRAY MATIAS DE CORDOVA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE DERECHOS HUMANOS MIGUEL AGUSTIN PRO JUAREZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE DERECHOS HUMANOS TOALTEPEYOLO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE DESARROLLO ALTERNATIVO INDIGENA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE EDUCACION AMBIENTAL Y RECREATIVO-CEAR</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE ESTUDIOS SOCIALES Y DE OPINION PUBLICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE INVESTIGACIONES DE QUINTANA ROO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE INVESTIGACIONES SOCIOLOGIA Y TECNOLOGIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DE RETINA MEDICA Y QUIRURGICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO DE SALUD TLALPUJAHUA MICHOACAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO DEL CAMBIO GLOBAL Y LA SUSTENTABILIDAD EN EL SURESTE-CCGSS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO INTERNACIONAL DE MEJORAMIENTO DE MAIZ Y TRIGO INTERNACIONAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO MEXICANO DE LA TORTUGA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO MEXICANO PARA LA MUSICA Y LAS ARTES SONORAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO MULTIDISCIPLINARIO DE INVESTIGACIONES REGIONALES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CEPAL MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CIATEC</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CIBNOR/U MARISTA MERIDA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CIIT</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CIMMYT</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CNH</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COLEGIO DE POSGRADUADOS EN CIENCIAS AMBIENTALES Y BIOTECNOLOGIA DEL SURESTE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">COLEGIO OXFORD</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COLJAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">COLVER</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COMERCIO JUSTO MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">COMIMSA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COMISION ESTATAL DE DERECHOS HUMANOS DE JALISCO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">COMISION NACIONAL DE AREAS NATURALES PROTEGIDAS-CONANP</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COMITE DE BIENES COMUNALES Y COMITE DE VIGILANCIA DE SANTA CATARINA DEL MONTE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">COMITE DE DEFENSA DE LOS DERECHOS DE LA MUJER</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COMITE DE DERECHOS HUMANOS FRAY PEDRO LORENZO DE LA NADA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CONABIO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CONAGUA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CONEVAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CONGRESO DEL ESTADO DE SONORA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CONSTRUCTORA ESQUIVEL IBARRA CEZI</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COOPERATIVA DEL JITOMATE ZAPOTLANEJO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">COORDINACION GENERAL DE LA COMISION MEXICANA DE AYUDA A REFUGIADOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">COORDINACION GENERAL DE LOS INSTITUTOS NACIONALES DE SALUD</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">CULTIVOS MARINOS INTEGRADOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">DIRECCION GENERAL DE EDUCACION SUPERIOR TECNOLOGICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">DISTRIBUIDORA DE MAQUINAS Y MUEBLES DE MERIDA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">EATON TECHNOLOGIES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">EDUCACION SUPERIOR DE CELAYA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ELVAN DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ENER-G</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ERAT</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ESCOM</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ESCUELA SUPERIOR DE ARTES DE YUCATAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ESPACIO EMPRESARIAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ESPACIOS NATURALES Y DESARROLLO SUSTENTABLE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ESPECIALISTAS EN TURBOPARTES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ESTRELLA DE BELEM. BED &amp; BREAKFAST&amp; SPA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">EXCARE LOS CABOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">FEDERACION MEXICANA DE FUTBOL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">FEMSA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">FIRA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">FOMENTO AZUCARERO DEL GOLFO, A.C.</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">FUNDACION CASA NUEVA I.A.P.</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">FUNDACION CODET PARA LA PREVENCION DE LA CEGUERA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">FUNDACION DE ASISTENCIA PRIVADA CONDE DE VALENCIANA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">FUNDACION MUNDO SUSTENTABLE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GANADEROS PRODUCTORES DE LECHE PURA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GBS GLOBAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GEO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GIZ-MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GOBIERNO DEL ESTADO DE AGUASCALIENTES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GOBIERNO DEL ESTADO DE BAJA CALIFORNIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GOBIERNO DEL ESTADO DE GUANAJUATO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GOBIERNO DEL ESTADO DE PUEBLA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GOBIERNO DEL ESTADO DE SONORA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GOBIERNO DEL ESTADO DE TABASCO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GOBIERNO DEL ESTADO DE YUCATAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GOBIERNO DEL ESTADO DE ZACATECAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GOBIERNO MUNICIPAL DE MACUSPANA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GRANJAS CARROLL DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GRUPO DE DISEÑO URBANO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GRUPO HERNANDEZ GARZA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GRUPO NHK</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GRUPO OLOARTE Y SORIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">GRUPO PAPALOTLA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">GUARDIANES DE LOS VOLCANES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">H. AYUNTAMIENTO DE CHONTLA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HERMANOS EN EL CAMINO ALBERGUE DE MIGRANTES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HISTORIAS CIENCIACIONALES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL ABC</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL ANGELES ACOXPA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL CIVIL DE GUADALAJARA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL CIVIL DE GUADALAJARA FRAY ANTONIO ALCALDE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL DE ALTA ESPECIALIDAD DR. GUSTAVO A. ROVIROSA PEREZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL GENERAL DE OCCIDENTE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL INFANTIL DE MONTERREY</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL LA CARLOTA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSPITAL MATERNO INFANTIL ESPERANZA LÓPEZ MATEOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOSPITAL REGIONAL DE ALTA ESPECIALIDAD DE LA PENINSULA DE YUCATAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOSTAL MX</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOTEL LOS SOLACHES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">HOTEL REAL DE MINAS DE SAN MIGUEL DE ALLENDE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">HOTELES LAS BRISAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IDT CONSULTORIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IIE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IMAATECH</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INDRE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INFRAESTRUCTURA PORTUARIA MEXICANA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INGENIERIA MECATRONICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INIFAP-CENID-RASPA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO DE CIENCIAS FORENSES DEL TRIBUNAL SUPERIOR DE JUSTICIA-CDMX</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO DE INFORMACION ESTADISTICA Y GEOGRAFICA DEL ESTADO DE JALISCO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO DE INVESTIGACIONES ELECTRICAS-IIE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO DE OFTALMOLOGIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO DE PSICOTERAPIA SISTÉMICA HUMANISTA Y SEXUALIDAD</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO DE SALUD DEL ESTADO DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO DEL DEPORTE Y LA CULTURA FISICA DE BAJA CALIFORNIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO ELECTORAL DEL DISTRITO FEDERAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO INTERAMERICANO DE COOPERACION PARA LA AGRICULTURA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO MEXICANO DE DERECHOS HUMANOS Y DEMOCRACIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE CANCEROLOGICA-INCAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE CARDIOLOGIA-IGNACIO CHAVEZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE CARDIOLOGIA IGNACIO CHAVEZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE ENFERMEDADES RESPIRATORIAS ISMAEL COSIO VILLEGAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE PEDIATRIA-INP</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO NACIONAL DE PSIQUIATRIA RAMON DE LA FUENTE MUÑIZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INSTITUTO NACIONAL DE REHABILITACION</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">INSTITUTO PEDAGOGICO PARA PROBLEMAS DEL LENGUAJE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">INTEGRALIA CONSULTORES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT CANCUN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT CIUDAD VICTORIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT CULIACAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT EL SALTO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT HERMOSILLO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT MAZATLAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT MEXICALI</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT NUEVO LEON</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT PACHUCA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT ROQUE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT SUPERIOR ACAYUCAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT SUPERIOR CAJEME</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT SUPERIOR CALKINI</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT SUPERIOR IRAPUATO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT SUPERIOR RIOVERDE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT SUPERIOR SINALOA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT SUPERIOR TIERRA BLANCA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">IT TUXTEPEC</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">IT VALLE MORELIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ITAM-PFAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ITDP MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">KERRY INGREDIENTS DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">KITCHEN EQUIPMENT SAN LUIS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">LA 72 HOGAR - REFUGIO PARA PERSONAS MIGRANTES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">LABORATORIO DE INMUNOLOGIA VETERINARIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">LABORATORIOS AGROENZYMAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">MABE TECNOLOGIA Y PROYECTOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">MALTA TEXO DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">MEDICA SUR</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">MEXFAM</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">MINA VIRGEN DEL CARMEN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">MODULO SOLAR</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">MONSANTO COMERCIAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">MUNICIPIO DE CHAHUITES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">MUNICIPIO DE IXTENCO-TLAXCALA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">MUNICIPIO DE SAN JERONIMO SOSOLA OAXACA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">MUNICIPIO DE SAN PEDRO CHOLULA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">NATIONAL CAR RENTAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">NAVIOS MEXICAN FUSION SEAFOOD</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">NEMAK</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">NUTEK</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">OCTAVO TRIBUNAL COLEGIADO EN MATERIA ADMINISTRATIVA DEL PRIMER CIRCUITO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ONU MUJERES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">OPERADORA DOS CASAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">OPERADORA HOTELERA RAFE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">OTRASENDA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">PHI SERVICIOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">PRESIDENCIA MUNICIPAL DE IXTACAMAXTITLAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">PRO NATURA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">PROVINCIA FRANCISCANA DEL SANTO EVANGELIO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">QUIMMCO CENTRO TECNOLOGICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">RESPUESTAS URBANAS DE TRABAJO AMBIENTAL SUSTENTABLE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">RESTAURANTE MORENA MIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">REUSSITE ADECCO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ROBERT BOSCH SISTEMAS DE FRENOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">ROTOINNOVACION</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">SECRETARIA DE LA FUNCION PUBLICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">SECRETARIA DE MEDIO AMBIENTE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">SERVICIO NACIONAL DE SANIDAD, INOCUIDAD Y CALIDAD AGROALIMENTARIA-SENASICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">SERVICIOS ESTATALES DE SALUD PUBLICA EN EL ESTADO DE AGUASCALIENTES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">SISTEMAS DE DISENO E INGENIERIAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">SISTEMAS TECNICOS DE CONTROL</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">SOCIEDAD COOPERATIVA BLAKIS EN PROGRESO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">SOFTLOGIK</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">SURFAX</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">TAMSA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">TECNOLOGICO NACIONAL DE MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">TESE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">TRAVESIAS MUNDIALES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">TRES MUNDOS HOSTEL</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U BAJA CALIFORNIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">U CRISTOBAL COLON</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U DE LA CIENEGA EDO MICHOACAN</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">U DEL CARIBE</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U DEL ITSMO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">U INTERCULTURAL CHIAPAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U INTERCULTURAL DE CHIAPAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">U INTERCULTURAL EDO MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U MARISTA MERIDA</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">U MEXIQUENSE BICENTENARIO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U OCCIDENTE</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">U SIERRA JUAREZ</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">U SIERRA SUR</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UDLA-P</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">UIM</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UNIDAD DE SERVICIOS DE PATOLOGIA CLINICA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">UP AGUASCALIENTES</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UP DEL BICENTENARIO</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">UP EDO MORELOS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UP PUEBLA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">UP QUERETARO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UP TLAXCALA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">UT DEL MAR TAMAULIPAS</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UT LA SELVA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">UT SAN LUIS RIO COLORADO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">UT SUR SONORA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">VALO BIOMEDIA MEXICO</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">VENUN INMOBILIARIA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">VIAJES VIMOR</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">VIZIC TECHNOLOGIES</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">XENPAL</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">YOLTIKA</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">ZOOLOGICO GUADALAJARA</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>Ojalá hubiera más información disponible en la plataforma SIICYT. Como mencioné anteriormente, si quieren que ahonde en algún punto específico de este tema, háganmelo saber.</p>
+</div>
+</div>

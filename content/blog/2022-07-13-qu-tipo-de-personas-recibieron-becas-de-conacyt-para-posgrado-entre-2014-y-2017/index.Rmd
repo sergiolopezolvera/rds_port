@@ -1,0 +1,240 @@
+---
+title: ¿A dónde se fueron las becas de CONACYT para posgrado entre 2014
+  y 2017?
+author: Sergio López Olvera
+date: '2022-07-13'
+slug: []
+categories:
+  - R
+tags:
+  - data
+  - ggplot2
+  - gis
+  - location
+  - map
+  - mining
+  - plot
+  - tidy
+  - becas
+  - español
+  - ciencia
+  - conacyt
+  - educacion
+  - posgrado
+meta_img: images/image.png
+description: Description for the page
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(readr)
+library(gridExtra)
+library(stringr)
+library(raster)
+library(rgdal)
+library(ggmap)
+library(broom)
+library(RColorBrewer)
+library(rgeos)
+library(sp)
+library(sf)
+```
+# Motivación
+Como ex becario de CONACYT (en dos ocasiones) me pareció interesante averiguar como se distribuyen las Becas Nacionales de Posgrado en la población el territorio nacional y las instituciones de educación superior. HAce un par de días, vagando por la [plataforma de Datos Abiertos del gobierno mexicano](https://datos.gob.mx/) me topé con el [SIICYT](https://www.siicyt.gob.mx/index.php/estadisticas/bases-de-datos-abiertas) que es una plataforma de bases de datos abiertas sobre investigación científica, desarrollo tecnológico e innovación con **muy pocos datos** y un sistema de visualización que **no funciona** al menos en el momento en que se publicó este artículo.
+
+Por lo que el objetivo de este artículo es mostrar de la forma más amigable que me sea posible la información más relevante de las becas nacionales para posgrado otorgadas entre 2014 y 2017 (es lo único que hay) por CONACYT. Este es un análisis exploratorio bastante sencillo, pero si quieren que ahonde un poco más pueden comentarlo y lo haré con gusto.
+
+```{r Import}
+Becas_14 <- read.csv("Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2014.csv")
+Becas_15 <- read.csv("Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2015.csv")
+Becas_16 <- read.csv("Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2016.csv")
+Becas_17 <- read.csv("Becas_Nuevas_Mixtas_Nacionales_por_Area_de_Conocimiento_2017.csv")
+```
+```{r wrangling}
+Becas_14 <- Becas_14 %>%
+  dplyr::select("Area" = AREA.DE.CONOCIMIENTO, "Nivel" = NIVEL,
+                "Escuela" = INSTITUCION.DESTINO, "Estado" = ENTIDAD.FEDERATIVA,
+                "Sexo" = GENERO) %>% 
+  mutate(Año = 2014,
+         Sexo = recode(Sexo, "F" = "Femenino", "M" = "Masculino"),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         "Veracruz" = "Veracruz De Ignacio De La Llave",
+                         "San Luis Potosi" = "San Luis Potosí",
+                         "Distrito Federal" = "Ciudad De México",
+                         "Estado De Mexico" = "México",
+                         "Michoacan" = "Michoacán De Ocampo",
+                         "Nuevo Leon" = "Nuevo León",
+                         "Queretaro" = "Querétaro",
+                         "Yucatan" = "Yucatán",
+                         "Coahuila" = "Coahuila De Zaragoza"))
+
+Becas_15 <- Becas_15 %>%
+  dplyr::select("Area" = Área.de.Conocimiento, Nivel,
+                "Escuela" = Institución.Destino, "Estado" = Entidad.Federativa,
+                "Sexo" = Género) %>% 
+  mutate(Año = 2015,
+         Sexo = recode(Sexo, "F" = "Femenino", "M" = "Masculino"),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         "Veracruz" = "Veracruz De Ignacio De La Llave",
+                         "San Luis Potosi" = "San Luis Potosí",
+                         "Distrito Federal" = "Ciudad De México",
+                         "Estado De Mexico" = "México",
+                         "Michoacan" = "Michoacán De Ocampo",
+                         "Nuevo Leon" = "Nuevo León",
+                         "Queretaro" = "Querétaro",
+                         "Yucatan" = "Yucatán",
+                         "Coahuila" = "Coahuila De Zaragoza"))
+
+Becas_16 <- Becas_16 %>%
+  dplyr::select("Area" = Área.de.Conocimiento, Nivel,
+                "Escuela" = Institución.Destino, "Estado" = Entidad.Federativa,
+                "Sexo" = Género) %>% 
+  mutate(Año = 2016,
+         Sexo = recode(Sexo, "F" = "Femenino", "M" = "Masculino"),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         "Veracruz" = "Veracruz De Ignacio De La Llave",
+                         "San Luis Potosi" = "San Luis Potosí",
+                         "Distrito Federal" = "Ciudad De México",
+                         "Estado De Mexico" = "México",
+                         "Michoacan" = "Michoacán De Ocampo",
+                         "Nuevo Leon" = "Nuevo León",
+                         "Queretaro" = "Querétaro",
+                         "Yucatan" = "Yucatán",
+                         "Coahuila" = "Coahuila De Zaragoza"))
+
+Becas_17 <- Becas_17 %>%
+  dplyr::select("Area" = Área.de.Conocimiento, Nivel,
+                "Escuela" = Institución.Destino, "Estado" = Entidad.Federativa,
+                "Sexo" = Género) %>% 
+  mutate(Año = 2017,
+         Sexo = recode(Sexo, "F" = "Femenino", "M" = "Masculino"),
+         Estado = str_to_title(Estado),
+         NOMGEO = recode(Estado,
+                         "Veracruz" = "Veracruz De Ignacio De La Llave",
+                         "San Luis Potosi" = "San Luis Potosí",
+                         "Distrito Federal" = "Ciudad De México",
+                         "Estado De Mexico" = "México",
+                         "Michoacan" = "Michoacán De Ocampo",
+                         "Nuevo Leon" = "Nuevo León",
+                         "Queretaro" = "Querétaro",
+                         "Yucatan" = "Yucatán",
+                         "Coahuila" = "Coahuila De Zaragoza"))
+```
+
+```{r binding}
+Becas <- rbind(Becas_14, Becas_15, Becas_16, Becas_17)
+```
+
+## Áreas del conocimiento
+
+CONACYT agrupa los programas de estudio e investigación en 7 áreas de conocimiento, algunas más populares que otras entre los becarios. Y aunque, como muestra esta figura, la popularidad de las áreas puede cambiar año con año, generalmente ingenierías, biotecnología y ciencias agropecuarías y humanidades y ciencias de la conducta son las más frecuentes entre las becas otorgadas por CONACYT. 
+```{r Area}
+Becas %>%
+  group_by(Area, Año) %>%
+  summarise(Becas = n()) %>%
+  pivot_wider(names_from = Año, values_from = Becas) %>%
+  arrange(Area) %>% .[-1,]
+
+Becas %>%
+  group_by(Area, Año) %>%
+  summarise(Becas = n()) %>%
+  .[-1,] %>%
+  ggplot(aes(Año, Becas, color = Area)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Becas para posgrado por área de conocimiento",
+       subtitle = "Desde 2014 hasta 2017")
+```
+Más de un factor puede influir en la distribución de las becas entre las áreas del conocimiento. Por ejemplo: las preferencias de los estudiantes, la oferta de las universidades y las prioridades de las políticas públicas nacionales que dictan las áreas de mayor interés para el desarrollo del país.
+
+## Grado académico
+
+Dentro del programa de Becas Nacionales, CONACYT considera estudios de especialidad, maestría y doctorado. La duración de estos programas puede variar según el plan desarrollado por las instituciones educativas que los imparten y el monto recibido por el becario depende del grado estudiado (doctorado > maestría > especialidad). La figura muestra que el grado al que más becas se otorgaron durante el periodo analizado es maestría, seguido por doctorado y finalmente especialidad.
+```{r Nivel}
+Becas %>%
+  group_by(Nivel, Año) %>%
+  summarise(Becas = n()) %>%
+  pivot_wider(names_from = Año, values_from = Becas) %>%
+  arrange(desc(Nivel)) %>% .[-1,]
+
+Becas %>%
+  group_by(Nivel, Año) %>%
+  summarise(Becas = n()) %>%
+  .[-1,] %>%
+  ggplot(aes(Año, Becas, fill = Nivel)) +
+  geom_col(position = "dodge") +
+  labs(title = "Becas para posgrado por grado académico",
+       subtitle = "Desde 2014 hasta 2017")
+```
+La diferencia entre la frecuencia en mastría y doctorado puede deberse a que haber obtenido el grado de maestría es un requisito para ingresar a la mayoría de los doctorados ofertados. Por otra parte, un rápido vistazo en el pronto difunto padrón nacional de posgrados de calidad demuestra que el grado con mayor oferta es el de maestría y aquel con menor oferta es el de especialidad.
+
+## Estados
+
+Pero, ¿a dónde se van todos estos becarios? Principalmente a la Ciudad de México, como lo muestra el siguiente mapa. 
+```{r Estado}
+est_becas <- Becas %>%
+  group_by(NOMGEO) %>%
+  summarise(Becas = n()) %>%
+  arrange(NOMGEO) %>% .[-1,]
+
+ent <- read_sf("00ent.shp") %>%
+  mutate(NOMGEO = str_to_title(NOMGEO))
+
+ent_geo <- ent %>%
+  left_join(est_becas) %>%
+  st_sf(sf_column_name = "geometry")
+
+ent_geo %>%
+  ggplot() +
+  geom_sf(aes(fill = Becas)) +
+  labs(title = "Estados con más becas de CONACYT para posgrado",
+       subtitle = "Entre 2014 y 2017")
+```
+Después de la capital del país, las siguientes entidades más pobladas son aquellas en las que estudiaron más becarios. Probablemente porque son también aquellas con más instituciones educativas y mayor oferta de programas. Por otra parte, Baja California y Yucatán son casos interesantes ya que a pesar de no ser estados tan poblados (número 11 y 22) recibieron un número de becarios considerable.
+
+## Sexo
+
+Según INEGI, en el año 2015, el 51.4% de la población mexicana era de sexo femenino y 48.6% de sexo masculino. Como se muestra en la siguiente figura, el otorgamiento de becas para estudios de posgrado en el periodo estudiado fue congruente con la distribución de sexo en la población mexicana.
+```{r Sexo}
+Becas %>%
+  group_by(Sexo, Año) %>%
+  summarise(Becas = n()) %>%
+  pivot_wider(names_from = Año, values_from = Becas) %>%
+  arrange(Sexo) %>% .[-1,] 
+
+Becas %>%
+  group_by(Sexo, Año) %>%
+  summarise(Becas = n()) %>%
+  .[-1,] %>%
+  ggplot(aes(Año, Becas, fill = Sexo)) +
+  geom_col(position = "dodge") +
+  labs(title = "Becas para posgrado por sexo",
+       subtitle = "Desde 2014 hasta 2017")
+```
+Sin embargo, esto podría cambiar si analizaramos la proporción de becas otorgadas a cada sexo en las diferentes áreas de estudio, estados y universidades.
+
+## Institución educativa
+
+Finalmente, ¿qué universidades o instituciones de educación superior recibieron el mayor número de becarios? Como se muestra en la última tabla, los resultados no soreprenden.
+```{r Escuela}
+esc <- Becas %>%
+  group_by(Escuela) %>%
+  summarise(Becas = n()) %>%
+  .[-1,] %>%
+  arrange(desc(Becas))
+
+knitr::kable(esc, 
+ caption = "Becas otorgadas por institución educativa")
+```
+
+Ojalá hubiera más información disponible en la plataforma SIICYT. Como mencioné anteriormente, si quieren que ahonde en algún punto específico de este tema, háganmelo saber.
+
+
+
+
