@@ -189,7 +189,11 @@ DENUE_geo %>%
   geom_sf(aes(fill = per_capita)) +
   scale_fill_viridis_c(option = "plasma", trans = "sqrt") +
   coord_sf(xlim = c(3000000, 3150000), ylim = c(750000, 900000))+
+<<<<<<< HEAD
   labs(title = "Más unidades económicas relacionadas al café per cápita",
+=======
+  labs(title = "Municipios con más unidades económicas relacionadas al café per cápita",
+>>>>>>> 62340486637549296361caac15bcd28ac1496870
        subtitle = "En el centro del estado de Veracruz",
        caption = "De acuerdo con DENUE (2022)
        No se consideran las actividades agrícolas debido a la ausencia de información") +
