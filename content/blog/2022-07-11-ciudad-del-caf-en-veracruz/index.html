@@ -99,17 +99,25 @@ DENUE_tres %&gt;%
 <h3>Distribución de las actividades relacionadas al café en el estado de Veracruz</h3>
 <p>Dichas actividades, como muestra el mapa siguiente se concentran principalmente en el centro del Estado de Veracruz, región geográfica que históricamente ha sido productora de café y en la cual se encuentra el municipio de Coatepec.</p>
 <pre class="r"><code>#Importando archivo .shp con los municipios del estado de Veracruz y convirtiendo clave a integer
-mun &lt;- read_sf(&quot;C:/Users/Sergio/projects/rds_port/content/blog/2022-07-11-ciudad-del-caf-en-veracruz/30mun.shp&quot;) %&gt;%
+
+mun &lt;- read_sf(&quot;30mun.shp&quot;) %&gt;%
   mutate(CVE_MUN = as.integer(CVE_MUN))
 
-#Uniendo data frame con información de DENUE con el poligonal de municipios y transformando a sf
+pob &lt;- read.csv(&quot;pob_ver.csv&quot;) %&gt;%
+  filter(NOM_LOC == &quot;Total del Municipio&quot;) %&gt;%
+  dplyr::select(&quot;CVE_MUN&quot; = MUN, POBTOT)
+
+#Uniendo data frame con información de DENUE y el ITER con el poligonal de municipios y transformando a sf
 
 DENUE_geo &lt;- DENUE_tres %&gt;%
   group_by(CVE_MUN) %&gt;%
   summarize(Unidades = n()) %&gt;%
   right_join(mun) %&gt;%
+  left_join(pob) %&gt;%
+  mutate(per_capita = Unidades/POBTOT) %&gt;%
   st_sf(sf_column_name = &quot;geometry&quot;)</code></pre>
-<pre><code>## Joining, by = &quot;CVE_MUN&quot;</code></pre>
+<pre><code>## Joining, by = &quot;CVE_MUN&quot;
+## Joining, by = &quot;CVE_MUN&quot;</code></pre>
 <pre class="r"><code>#Construyendo mapa graduado por Número de Unidades económicas
 
 DENUE_geo %&gt;%
@@ -126,19 +134,7 @@ st_sf(sf_column_name = &quot;geometry&quot;) %&gt;%
 
 uni &lt;- DENUE_geo %&gt;%
   filter(NOMGEO %in% c(&quot;Coatepec&quot;, &quot;Xalapa&quot;)) %&gt;%
-  dplyr::select(NOMGEO, Unidades)
-
-uni</code></pre>
-<pre><code>## Simple feature collection with 2 features and 2 fields
-## Geometry type: MULTIPOLYGON
-## Dimension:     XY
-## Bounding box:  xmin: 3011986 ymin: 827615.4 xmax: 3044955 ymax: 854175
-## Projected CRS: MEXICO_ITRF_2008_LCC
-## # A tibble: 2 x 3
-##   NOMGEO   Unidades                                                     geometry
-##   &lt;chr&gt;       &lt;int&gt;                                           &lt;MULTIPOLYGON [m]&gt;
-## 1 Coatepec       93 (((3013109 845824.4, 3013130 845800.1, 3013151 845831.5, 30~
-## 2 Xalapa        269 (((3039279 854132.8, 3039264 853888, 3039258 853861.4, 3039~</code></pre>
+  dplyr::select(NOMGEO, Unidades)</code></pre>
 <p>Sin embargo, como muestra el segundo mapa, no es Coatepec el municipio con más Unidades Económicas (93) que realizan actividades relacionadas al café, sino Xalapa (269). Esto puede deberse a que la población de Xalapa es mucho más abundante y requieren de más establecimientos prestadores de servicios como las cafeterías (actividad con mayor número de unidades en este análisis).</p>
 <pre class="r"><code>#Construyendo mapa graduado por Número de Unidades económicas
 DENUE_geo %&gt;%
@@ -153,6 +149,37 @@ DENUE_geo %&gt;%
   annotate(geom = &quot;text&quot;,x = 3060000 ,y = 830000, label = &quot;Coatepec&quot;, colour = &quot;white&quot;) +
   annotate(geom = &quot;text&quot;,x = 3055000 ,y = 850000, label = &quot;Xalapa&quot;, colour = &quot;white&quot;)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<p>Si consideramos el tamaño de la población podemos encontrar el número de unidades económicas per cápita de cada municipio, también podríamos analizar la distribución de cada actividad específica. Por ejemplo: ¿qué municipio fabrica maquinaria para café?, ¿cuál cuenta con más beneficios) y ¿cuál concentra el mayor número de unidades registradas como tostadores?</p>
+<p>Si consideramos el tamaño de la población podemos encontrar el número de unidades económicas per cápita de cada municipio. El tercer mapa ilustra esto y en el se puede observar que Coatepec es el municipio del estado de Veracruz con más Unidades Económicas que realizan actividades relacionadas al café per cápita. Esto quiere decir que Coatepe, al menos en cierta forma, ¡sigue siendo <strong>la</strong> <em>ciudad del café</em>!</p>
+<pre class="r"><code>DENUE_geo %&gt;%
+  ggplot() +
+  geom_sf(aes(fill = per_capita)) +
+  scale_fill_viridis_c(option = &quot;plasma&quot;, trans = &quot;sqrt&quot;) +
+  coord_sf(xlim = c(3000000, 3150000), ylim = c(750000, 900000))+
+  labs(title = &quot;Más unidades económicas relacionadas al café per cápita&quot;,
+       subtitle = &quot;En el centro del estado de Veracruz&quot;,
+       caption = &quot;De acuerdo con DENUE (2022)
+       No se consideran las actividades agrícolas debido a la ausencia de información&quot;) +
+  annotate(geom = &quot;text&quot;,x = 3060000 ,y = 830000, label = &quot;Coatepec&quot;, colour = &quot;white&quot;) +
+  annotate(geom = &quot;text&quot;,x = 3055000 ,y = 850000, label = &quot;Xalapa&quot;, colour = &quot;white&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Pero, ¿a qué se dedica estña ciudad del café que tal vez ya casi no cultiva? Como se ve en la siguiente figura, la actividad más común son las cafeterías, seguida de la elaboración de café tostado y molido, la comercialización, la fabricación de maquinaria y equipo y finalmente el beneficio del café.</p>
+<pre class="r"><code>DENUE_tres %&gt;%
+  filter(Municipio == &quot;Coatepec&quot;) %&gt;%
+  group_by(Actividad) %&gt;%
+  summarise(Número = n()) %&gt;%
+  arrange(desc(Número)) %&gt;%
+  ggplot(aes(Número, Actividad, fill = Actividad)) +
+  geom_col() +
+  theme(legend.position = &quot;none&quot;) +
+  labs(title = &quot;Actividades relacionadas al café en Coatepec, Veracruz&quot;,
+       subtitle = &quot;Unidades económicas&quot;,
+       x = &quot;Número&quot;) +
+  scale_y_discrete(limits = c(&quot;Beneficio del café&quot;,
+                              &quot;Fabricación de maquinaria y equipo&quot;,
+                              &quot;Comercializadora&quot;,
+                              &quot;Elaboración de café tostado y molido&quot;,
+                              &quot;Cafeterías y similares&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Sea como sea, el café sigue siendo un producto central en la economía del municipio y el corazón de los coatepecanos.</p>
 <p>Si les interesa ahondar más en este tema coméntenlo y lo haré con gusto.</p>
 </div>
