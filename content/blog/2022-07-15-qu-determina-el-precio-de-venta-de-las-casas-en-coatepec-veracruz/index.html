@@ -1,0 +1,371 @@
+---
+title: ¿Qué determina el precio de venta de las casas en Coatepec, Veracruz?
+author: Sergio López Olvera
+date: '2022-07-15'
+slug: []
+categories:
+  - R
+tags:
+  - ciencia
+  - cleaning
+  - data
+  - español
+  - ggplot2
+  - gis
+  - location
+  - mining
+  - parsing
+  - plot
+  - tidy
+  - wrangling
+  - web
+  - scraping
+  - webscraping
+  - linearregression
+  - linear
+  - regression
+  - model
+  - modelo
+  - regresión
+  - lineal
+  - econometría
+  - econometrics
+  - realestate
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<div id="pregunta" class="section level2">
+<h2>Pregunta</h2>
+<p>Durante la última década, la ciudad de Coatepec ha experimentado un crecimiento acelerado. Frecuentemente, los ciudadanos encontramos nuevos fraccionamientos en el municipio y un aumento agresivo en los precios de los bienes inmuebles. Por otra parte, lo créditos hipotecarios otorgados a los trabajadores por las instituciones públicas de seguridad social no siempre son suficientes para adquirir un hogar en dicho mercado.</p>
+<p>Esto me llevó a plantearme la siguiente pregunta, <strong>¿qué factores determinan el precio de una casa en el municipio de Coatepec, Veracruz?</strong></p>
+</div>
+<div id="importación-limpieza-y-organización-de-datos" class="section level2">
+<h2>Importación, limpieza y organización de datos</h2>
+<p>Dado que no encontré una base de datos con la información de las ventas realizadas en el municipio, realicé este análisis con los datos de los inmuebles que actualmente se encuentran en el mercado. Para este fin, miné (extraje) información del sitio web <a href="https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-1/v1c1293l12120p2?pr=0,&amp;ba=10&amp;be=1&amp;pa=grage&amp;si=105,">Viva Anuncios</a> usando el paquete Rvest y limpié los datos. Para reducir el enfoque del análisis consideré aquellas ofertas de <strong>casas en el municipio de Coatepec, Veracruz que tuvieran información completa</strong> (recámaras, baños, cochera, superficie del terreno y ubicación) que se encontraran en las 6 colonias o fraccionamientos más frecuentes.</p>
+<p>El resultado del proceso fue un conjunto de 68 casas con diferentes características.</p>
+<pre class="r"><code>map_df(1:7, function(i) {
+  
+  # Progress indicator
+  print(i)
+  
+  #String for consecutive pages
+  page = paste0(&quot;https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-&quot;, i, &quot;/v1c1293l12120p&quot;, i,&quot;?pr=0,&amp;ba=10&amp;be=1&amp;pa=grage&amp;si=105,&quot;)
+  
+  precio &lt;- read_html(page) %&gt;% html_nodes(&quot;.ad-price&quot;) %&gt;% html_text() %&gt;%.[-1]
+  recamaras &lt;- read_html(page) %&gt;% html_nodes(&quot;.re-bedroom&quot;) %&gt;% html_text() %&gt;%.[-1]
+  banos &lt;- read_html(page) %&gt;% html_nodes(&quot;.re-bathroom&quot;) %&gt;% html_text() 
+  autos &lt;- read_html(page) %&gt;% html_nodes(&quot;.car-parking&quot;) %&gt;% html_text() 
+  superficie &lt;- read_html(page) %&gt;% html_nodes(&quot;.surface-area&quot;) %&gt;% html_text() %&gt;% .[-1]
+  ubi &lt;- read_html(page) %&gt;% html_nodes(&quot;#tileRedesign b&quot;) %&gt;% html_text() %&gt;% .[-1] 
+  desc &lt;- read_html(page) %&gt;% html_nodes(&quot;.tile-title-text&quot;) %&gt;% html_text() %&gt;% .[-1] 
+  
+  #binding resulting dataframes
+  data.frame(precio, recamaras, banos, autos, superficie, ubi, desc)
+
+  #Assigning to an object
+}) -&gt; casas_1</code></pre>
+<pre><code>## [1] 1
+## [1] 2
+## [1] 3
+## [1] 4
+## [1] 5
+## [1] 6
+## [1] 7</code></pre>
+<pre class="r"><code>map_df(8:19, function(i) {
+  
+  # Progress indicator
+  print(i)
+  
+  #String for consecutive pages
+  page = paste0(&quot;https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-&quot;, i, &quot;/v1c1293l12120p&quot;, i,&quot;?pr=0,&amp;ba=10&amp;be=1&amp;pa=grage&amp;si=105,&quot;)
+  
+  precio &lt;- read_html(page) %&gt;% html_nodes(&quot;.ad-price&quot;) %&gt;% html_text() %&gt;%.[-1]
+  recamaras &lt;- read_html(page) %&gt;% html_nodes(&quot;.re-bedroom&quot;) %&gt;% html_text() %&gt;%.[-1]
+  banos &lt;- read_html(page) %&gt;% html_nodes(&quot;.re-bathroom&quot;) %&gt;% html_text() 
+  autos &lt;- read_html(page) %&gt;% html_nodes(&quot;.car-parking&quot;) %&gt;% html_text() 
+  superficie &lt;- read_html(page) %&gt;% html_nodes(&quot;.surface-areaV2&quot;) %&gt;% html_text()
+  ubi &lt;- read_html(page) %&gt;% html_nodes(&quot;#suggestedAds b&quot;) %&gt;% html_text()
+  desc &lt;- read_html(page) %&gt;% html_nodes(&quot;.tile-title-text&quot;) %&gt;% html_text() %&gt;% .[-1] 
+  
+  #binding resulting dataframes
+  data.frame(precio, recamaras, banos, autos, superficie, ubi, desc)
+  
+  #Assigning to an object
+}) -&gt; casas_2</code></pre>
+<pre><code>## [1] 8
+## [1] 9
+## [1] 10
+## [1] 11
+## [1] 12
+## [1] 13
+## [1] 14
+## [1] 15
+## [1] 16
+## [1] 17
+## [1] 18
+## [1] 19</code></pre>
+<pre class="r"><code>#binding both data frames together
+casas &lt;- rbind(casas_1, casas_2) 
+
+#Assigning columns names
+colnames(casas) &lt;- c(&quot;Precio&quot;, &quot;Recamaras&quot;, &quot;Banos&quot;, &quot;Cochera&quot;, &quot;Superficie&quot;, &quot;Ubicacion&quot;, &quot;Descripcion&quot;)
+
+#Wrangling and cleaning the data
+casas &lt;- casas %&gt;%
+  filter(!is.na(Recamaras) &amp; Ubicacion %in% c(&quot;22 De Septiembre&quot;, &quot;Bernardo Casals O Nueva Nestle&quot;,
+                                              &quot;Campo Viejo&quot;, &quot;Centro&quot;, &quot;Jardines De Coatepec&quot;,
+                                              &quot;Jardines De Pastoresa&quot;, &quot;La Mata&quot;,
+                                              &quot;Rafael Hernandez Ochoa&quot;)) %&gt;%
+  mutate(Precio = str_trim(Precio, side = &quot;both&quot;),
+         Precio = str_remove(Precio, &quot;,&quot;),
+         Precio = str_remove(Precio, &quot;,&quot;),
+         Precio = str_remove(Precio,&quot;\\$&quot;),
+         Precio = as.numeric(Precio)/1000000,
+         Recamaras = str_remove(Recamaras, &quot;\\+&quot;),
+         Recamaras = as.numeric(Recamaras),
+         Banos = str_remove(Banos, &quot;\\+&quot;),
+         Banos = as.numeric(Banos),
+         Cochera = str_remove(Cochera, &quot;\\+&quot;),
+         Cochera = as.numeric(Cochera),
+         Ubicacion = str_to_title(Ubicacion),
+         Ubicacion = recode(Ubicacion, &quot;Bernardo Casals O Nueva Nestle&quot; = &quot;Nueva Nestle&quot;),
+         Descripcion = str_to_title(Descripcion),
+         Superficie = str_extract(Superficie, &quot;\\d{3,4}&quot;),
+         Superficie = as.numeric(Superficie)) %&gt;%
+  filter(Superficie &lt; 500)</code></pre>
+</div>
+<div id="análisis-de-los-datos" class="section level2">
+<h2>Análisis de los datos</h2>
+<p>Las variables obtenidas del sitio web minado son <strong>precio, número de recámaras, número de baños, espacios para auto en la cochera, superficie del terreno y ubicación</strong>. En los siguientes párrafos exploraremos como se comportan estas variables y como se relacionan entre sí. Finalmente, construiré un modelo de regresión lineal múltiple que sirva para predecir o establecer el precio de venta de una casa en Coatepec, Veracruz.</p>
+<div id="precio-y-número-de-recámaras" class="section level3">
+<h3>Precio y número de recámaras</h3>
+<p>Como se muestra en la primera figura, el precio de las casas incrementa cuando aumenta el número de recámaras que éstas tienen. También podemos notar que el número de recámaras más frecuente en el municipio es 3.</p>
+<pre class="r"><code>#Visualizing relation between price and number of bedrooms
+casas %&gt;% ggplot(aes(Recamaras, Precio, group = Recamaras)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  scale_x_continuous(breaks = c(2, 3, 4, 5)) +
+  labs(title = &quot;Relación entre precio y número de recámaras&quot;,
+       subtitle = &quot;De las casas en venta en Coatepec, Veracruz&quot;,
+       y = &quot;Precio en millones&quot;,
+       x = &quot;Número de recámaras&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/price-bedrooms-1.png" width="672" /></p>
+<p>Esto nos muestra una clara correlación positiva entre la variable precio y la variable recámaras.</p>
+</div>
+<div id="precio-y-número-de-baños" class="section level3">
+<h3>Precio y número de baños</h3>
+<p>La segunda figura nos muestra que también el número de baños suele incrementar el precio de una casa en venta y que el número de baños más frecuente es 3.</p>
+<pre class="r"><code>#Visualizing relation between price and number of bathrooms
+casas %&gt;% ggplot(aes(Banos, Precio, group = Banos)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  labs(title = &quot;Relación entre precio y número de baños&quot;,
+       subtitle = &quot;De las casas en venta en Coatepec, Veracruz&quot;,
+       y = &quot;Precio en millones&quot;,
+       x = &quot;Número de baños&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/price-bathrooms-1.png" width="672" />
+Esto nos muestra una clara correlación positiva entre la variable precio y la variable baños.</p>
+</div>
+<div id="precio-y-espacios-en-la-cochera" class="section level3">
+<h3>Precio y espacios en la cochera</h3>
+<p>Al parecer, como se ve en la siguiente figura, el número de espacios en la cochera no impacta significativamente en el precio de las casas. Probablemente sea un factor que los compradores valoren poco o que los vendedores subestimen.</p>
+<pre class="r"><code>#Visualizing relation between price and number of cars space in garage
+casas %&gt;% ggplot(aes(Cochera, Precio, group = Cochera)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  labs(title = &quot;Relación entre precio y número de autos que caben en la cochera&quot;,
+       subtitle = &quot;De las casas en venta en Coatepec, Veracruz&quot;,
+       y = &quot;Precio en millones&quot;,
+       x= &quot;Autos en cochera&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/price-garage-1.png" width="672" /></p>
+<p>Esto nos muestra que aunque hay una correlación positiva entre las variables, esta es muy débil.</p>
+</div>
+<div id="precio-y-superficie-del-terreno." class="section level3">
+<h3>Precio y superficie del terreno.</h3>
+<p>Según nos muestra la siguiente figura, la superficie del terreno en que la casa está construida impacta positivamente en su precio. Es decir, más terreno = más dinero.</p>
+<pre class="r"><code>#Visualizing relation between price and land area
+casas %&gt;%
+  ggplot(aes(Superficie, Precio)) +
+  geom_point() +
+  labs(title = &quot;Relación entre precio y superficie&quot;,
+       subtitle = &quot;De las casas en venta en Coatepec, Veracruz&quot;,
+       y = &quot;Precio en millones&quot;,
+       x = &quot;Superficie en metros cuadrados&quot;) +
+  geom_smooth(method = &quot;lm&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using formula &#39;y ~ x&#39;</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/price-land-1.png" width="672" /></p>
+<p>Esto nos muestra una correlación positiva, aunque no muy fuerte.</p>
+</div>
+<div id="precio-y-ubicación" class="section level3">
+<h3>Precio y ubicación</h3>
+<p>¿Qué tanto importa dónde se ubica la casa? Location, location, location…</p>
+<p>En este caso, importa. Aunque no son diferencias abismales, el gráfico de caja muestra como varían los precios entre las diferentes colonias.</p>
+<pre class="r"><code>#Visualizing relation between price and location
+casas %&gt;% ggplot(aes(Ubicacion, Precio, group = Ubicacion)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  labs(title = &quot;Relación entre precio y ubicación&quot;,
+       subtitle = &quot;De las casas en venta en Coatepec, Veracruz&quot;,
+       y = &quot;Precio en millones&quot;,
+       x = &quot;Ubicación&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="672" />
+Esto sugiere una correlación entre precio y ubicación. Como la ubicación es una variable categórica, haremos un truquillo más adelante para poder integrarla en el modelo.</p>
+</div>
+<div id="precio-y-todo-lo-demás" class="section level3">
+<h3>Precio y todo lo demás</h3>
+<p>En esta figura podemos ver como se relaciona el precio (eje Y) con el número de recámaras (tamaño del punto), la ubicación (color del punto) y la superficie del terreno (eje X). Parece ser que el patrón más claro es que mientras más grande es el punto, más arriba está.</p>
+<pre class="r"><code>casas %&gt;%
+  ggplot(aes(Superficie, Precio)) +
+  geom_point(aes(size = Recamaras, alpha = 0.5, color = Ubicacion)) +
+  labs(title = &quot;Relación entre precio, superficie, recámaras y ubicación&quot;,
+       subtitle = &quot;De las casas en venta en Coatepec, Veracruz&quot;,
+       y = &quot;Precio en millones&quot;,
+       x= &quot;Superficie en metros cuadrados&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" />
+Esto sugiere que la variable número de recámaras es la que está más relacionada con el precio y quizás la qu más influya en este ¿será cierto?</p>
+</div>
+<div id="correlación-entre-variables" class="section level3">
+<h3>Correlación entre variables</h3>
+<p>Esta figura nos muestra la correlación entre las variables. Como ya lo sospechábamos el número de recámaras es la variable más relacionada al precio, seguida del número de baños y la superficie en tercer lugar.</p>
+<pre class="r"><code>#Variable Dummy para Ubicación del 0 al 5 en orden de precio promedio
+casas %&gt;%
+  group_by(Ubicacion) %&gt;%
+  summarize(&quot;Precio promedio&quot; = mean(Precio)) %&gt;%
+  arrange(&quot;Precio promedio&quot;)</code></pre>
+<pre><code>## # A tibble: 5 x 2
+##   Ubicacion              `Precio promedio`
+##   &lt;chr&gt;                              &lt;dbl&gt;
+## 1 Campo Viejo                         2.11
+## 2 Centro                              1.95
+## 3 La Mata                             2.59
+## 4 Nueva Nestle                        3.11
+## 5 Rafael Hernandez Ochoa              2.20</code></pre>
+<pre class="r"><code>casas_dummy &lt;- casas %&gt;%
+  mutate(Ubi_Dummy = recode(Ubicacion,
+                            &quot;Campo Viejo&quot; = &quot;0&quot;,
+                            &quot;Centro&quot; = &quot;1&quot;,
+                            &quot;La Mata&quot; = &quot;2&quot;,
+                            &quot;Nueva Nestle&quot; = &quot;3&quot;,
+                            &quot;Rafael Hernandez Ochoa&quot; = &quot;4&quot;),
+         Ubi_Dummy = as.numeric(Ubi_Dummy)) %&gt;%
+  select(Precio, Recamaras, Banos, Cochera, Superficie, Ubi_Dummy)
+
+#Analyzing correlation among variables
+cor1 &lt;- casas_dummy %&gt;% cor()
+
+#Visualizing correlation among variables
+ggcorrplot(cor1)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/correlation-1.png" width="672" /></p>
+<p>Pero, ¿serán estas las mejores variables para predecir o establecer un buen precio de venta?</p>
+</div>
+</div>
+<div id="modelo-para-predecir-precio" class="section level2">
+<h2>Modelo para predecir precio</h2>
+<p>La siguiente figura nos ayudará a elegir cuáles son las variables que mejor nos ayudarían a predecir el precio de una casa en Coatepec, Veracruz. Aparentemente, la r^2 ajustada más alta (mejor ajuste de modelo) la obtendríamos considerando las variables independientes: recámaras, baños, superficie y ubicación.</p>
+<pre class="r"><code>#Selecting best regressors for a lineal model
+
+regsubsets1 &lt;- regsubsets(Precio ~ Recamaras + Banos + Cochera + Superficie + Ubi_Dummy,
+                           data = casas_dummy, nbest = 1, nvmax = NULL, force.in = NULL,
+                           force.out = NULL, method = &quot;exhaustive&quot;)
+
+#Visualizing best regressors subsets
+summary.out &lt;- summary(regsubsets1)
+
+as.data.frame(summary.out$outmat)</code></pre>
+<pre><code>##          Recamaras Banos Cochera Superficie Ubi_Dummy
+## 1  ( 1 )         *                                   
+## 2  ( 1 )         *     *                             
+## 3  ( 1 )         *     *       *                     
+## 4  ( 1 )         *     *       *                    *
+## 5  ( 1 )         *     *       *          *         *</code></pre>
+<pre class="r"><code>plot(regsubsets1, scale = &quot;adjr2&quot;, main = &quot;R^2 ajustada&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/regressors-1.png" width="672" /></p>
+<pre class="r"><code>which.max(summary.out$adjr2)</code></pre>
+<pre><code>## [1] 5</code></pre>
+<p>Construyendo el modelo, conseguiríamos los coeficientes que se muestran en la tabla.</p>
+<pre class="r"><code>#Linear regression model
+summary(lm(Precio ~ Recamaras + Banos + Superficie + Ubi_Dummy, data = casas_dummy))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Precio ~ Recamaras + Banos + Superficie + Ubi_Dummy, 
+##     data = casas_dummy)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.25354 -0.26339  0.00719  0.28776  1.46870 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -1.403966   0.475295  -2.954  0.00441 ** 
+## Recamaras    0.627479   0.145708   4.306 5.92e-05 ***
+## Banos        0.302622   0.106274   2.848  0.00594 ** 
+## Superficie   0.004562   0.002050   2.226  0.02962 *  
+## Ubi_Dummy    0.144849   0.061630   2.350  0.02190 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.5864 on 63 degrees of freedom
+## Multiple R-squared:  0.5239, Adjusted R-squared:  0.4936 
+## F-statistic: 17.33 on 4 and 63 DF,  p-value: 1.235e-09</code></pre>
+<pre class="r"><code>modelo &lt;- lm(Precio ~ Recamaras + Banos + Superficie + Ubi_Dummy, data = casas_dummy)
+
+coef &lt;- summary(modelo)$coefficients %&gt;% as.data.frame()
+
+knitr::kable(coef, 
+ caption = &quot;Modelo de regresión lineal múltiple&quot;)</code></pre>
+<table>
+<caption><span id="tab:model">Table 1: </span>Modelo de regresión lineal múltiple</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Estimate</th>
+<th align="right">Std. Error</th>
+<th align="right">t value</th>
+<th align="right">Pr(&gt;|t|)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-1.4039659</td>
+<td align="right">0.4752949</td>
+<td align="right">-2.953884</td>
+<td align="right">0.0044073</td>
+</tr>
+<tr class="even">
+<td align="left">Recamaras</td>
+<td align="right">0.6274787</td>
+<td align="right">0.1457082</td>
+<td align="right">4.306405</td>
+<td align="right">0.0000592</td>
+</tr>
+<tr class="odd">
+<td align="left">Banos</td>
+<td align="right">0.3026220</td>
+<td align="right">0.1062736</td>
+<td align="right">2.847573</td>
+<td align="right">0.0059413</td>
+</tr>
+<tr class="even">
+<td align="left">Superficie</td>
+<td align="right">0.0045624</td>
+<td align="right">0.0020499</td>
+<td align="right">2.225648</td>
+<td align="right">0.0296244</td>
+</tr>
+<tr class="odd">
+<td align="left">Ubi_Dummy</td>
+<td align="right">0.1448490</td>
+<td align="right">0.0616299</td>
+<td align="right">2.350302</td>
+<td align="right">0.0219030</td>
+</tr>
+</tbody>
+</table>
+<p>En conclusión, para predecir o determinar el precio de venta de una casa en Coatepec, Veracruz anunciada en Viva Anuncios usaríamos la siguiente ecuación.</p>
+<p><em>Precio = -0.903748 + 0.612049(Recámaras) + 0.261302(Baños) + 0.002974(Superficie) + 0.0704(Ubicación)</em></p>
+<p>En caso de que les interese ahondar más en este tema, coméntenlo y lo hacemos con gusto. Todos los comentarios, sugerencias o ideas son bien recibidos.</p>
+</div>

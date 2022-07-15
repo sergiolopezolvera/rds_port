@@ -1,0 +1,310 @@
+---
+title: ¿Qué determina el precio de venta de las casas en Coatepec, Veracruz?
+author: Sergio López Olvera
+date: '2022-07-15'
+slug: []
+categories:
+  - R
+tags:
+  - ciencia
+  - cleaning
+  - data
+  - español
+  - ggplot2
+  - gis
+  - location
+  - mining
+  - parsing
+  - plot
+  - tidy
+  - wrangling
+  - web
+  - scraping
+  - webscraping
+  - linearregression
+  - linear
+  - regression
+  - model
+  - modelo
+  - regresión
+  - lineal
+  - econometría
+  - econometrics
+  - realestate
+meta_img: images/image.png
+description: Description for the page
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+library(purrr)
+library(ggcorrplot)
+library(leaps)
+library(bestglm)
+```
+
+## Pregunta
+Durante la última década, la ciudad de Coatepec ha experimentado un crecimiento acelerado. Frecuentemente, los ciudadanos encontramos nuevos fraccionamientos en el municipio y un aumento agresivo en los precios de los bienes inmuebles. Por otra parte, lo créditos hipotecarios otorgados a los trabajadores por las instituciones públicas de seguridad social no siempre son suficientes para adquirir un hogar en dicho mercado.
+
+Esto me llevó a plantearme la siguiente pregunta, **¿qué factores determinan el precio de una casa en el municipio de Coatepec, Veracruz?**
+
+## Importación, limpieza y organización de datos
+Dado que no encontré una base de datos con la información de las ventas realizadas en el municipio, realicé este análisis con los datos de los inmuebles que actualmente se encuentran en el mercado. Para este fin, miné (extraje) información del sitio web [Viva Anuncios](https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-1/v1c1293l12120p2?pr=0,&ba=10&be=1&pa=grage&si=105,) usando el paquete Rvest y limpié los datos. Para reducir el enfoque del análisis consideré aquellas ofertas de **casas en el municipio de Coatepec, Veracruz que tuvieran información completa** (recámaras, baños, cochera, superficie del terreno y ubicación) que se encontraran en las 6 colonias o fraccionamientos más frecuentes.
+
+El resultado del proceso fue un conjunto de 68 casas con diferentes características.
+```{r Import-wrangling}
+map_df(1:7, function(i) {
+  
+  # Progress indicator
+  print(i)
+  
+  #String for consecutive pages
+  page = paste0("https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-", i, "/v1c1293l12120p", i,"?pr=0,&ba=10&be=1&pa=grage&si=105,")
+  
+  precio <- read_html(page) %>% html_nodes(".ad-price") %>% html_text() %>%.[-1]
+  recamaras <- read_html(page) %>% html_nodes(".re-bedroom") %>% html_text() %>%.[-1]
+  banos <- read_html(page) %>% html_nodes(".re-bathroom") %>% html_text() 
+  autos <- read_html(page) %>% html_nodes(".car-parking") %>% html_text() 
+  superficie <- read_html(page) %>% html_nodes(".surface-area") %>% html_text() %>% .[-1]
+  ubi <- read_html(page) %>% html_nodes("#tileRedesign b") %>% html_text() %>% .[-1] 
+  desc <- read_html(page) %>% html_nodes(".tile-title-text") %>% html_text() %>% .[-1] 
+  
+  #binding resulting dataframes
+  data.frame(precio, recamaras, banos, autos, superficie, ubi, desc)
+
+  #Assigning to an object
+}) -> casas_1
+
+map_df(8:19, function(i) {
+  
+  # Progress indicator
+  print(i)
+  
+  #String for consecutive pages
+  page = paste0("https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-", i, "/v1c1293l12120p", i,"?pr=0,&ba=10&be=1&pa=grage&si=105,")
+  
+  precio <- read_html(page) %>% html_nodes(".ad-price") %>% html_text() %>%.[-1]
+  recamaras <- read_html(page) %>% html_nodes(".re-bedroom") %>% html_text() %>%.[-1]
+  banos <- read_html(page) %>% html_nodes(".re-bathroom") %>% html_text() 
+  autos <- read_html(page) %>% html_nodes(".car-parking") %>% html_text() 
+  superficie <- read_html(page) %>% html_nodes(".surface-areaV2") %>% html_text()
+  ubi <- read_html(page) %>% html_nodes("#suggestedAds b") %>% html_text()
+  desc <- read_html(page) %>% html_nodes(".tile-title-text") %>% html_text() %>% .[-1] 
+  
+  #binding resulting dataframes
+  data.frame(precio, recamaras, banos, autos, superficie, ubi, desc)
+  
+  #Assigning to an object
+}) -> casas_2
+
+#binding both data frames together
+casas <- rbind(casas_1, casas_2) 
+
+#Assigning columns names
+colnames(casas) <- c("Precio", "Recamaras", "Banos", "Cochera", "Superficie", "Ubicacion", "Descripcion")
+
+#Wrangling and cleaning the data
+casas <- casas %>%
+  filter(!is.na(Recamaras) & Ubicacion %in% c("22 De Septiembre", "Bernardo Casals O Nueva Nestle",
+                                              "Campo Viejo", "Centro", "Jardines De Coatepec",
+                                              "Jardines De Pastoresa", "La Mata",
+                                              "Rafael Hernandez Ochoa")) %>%
+  mutate(Precio = str_trim(Precio, side = "both"),
+         Precio = str_remove(Precio, ","),
+         Precio = str_remove(Precio, ","),
+         Precio = str_remove(Precio,"\\$"),
+         Precio = as.numeric(Precio)/1000000,
+         Recamaras = str_remove(Recamaras, "\\+"),
+         Recamaras = as.numeric(Recamaras),
+         Banos = str_remove(Banos, "\\+"),
+         Banos = as.numeric(Banos),
+         Cochera = str_remove(Cochera, "\\+"),
+         Cochera = as.numeric(Cochera),
+         Ubicacion = str_to_title(Ubicacion),
+         Ubicacion = recode(Ubicacion, "Bernardo Casals O Nueva Nestle" = "Nueva Nestle"),
+         Descripcion = str_to_title(Descripcion),
+         Superficie = str_extract(Superficie, "\\d{3,4}"),
+         Superficie = as.numeric(Superficie)) %>%
+  filter(Superficie < 500)
+```
+
+## Análisis de los datos
+
+Las variables obtenidas del sitio web minado son **precio, número de recámaras, número de baños, espacios para auto en la cochera, superficie del terreno y ubicación**. En los siguientes párrafos exploraremos como se comportan estas variables y como se relacionan entre sí. Finalmente, construiré un modelo de regresión lineal múltiple que sirva para predecir o establecer el precio de venta de una casa en Coatepec, Veracruz.
+
+### Precio y número de recámaras
+
+Como se muestra en la primera figura, el precio de las casas incrementa cuando aumenta el número de recámaras que éstas tienen. También podemos notar que el número de recámaras más frecuente en el municipio es 3.
+
+```{r price-bedrooms}
+#Visualizing relation between price and number of bedrooms
+casas %>% ggplot(aes(Recamaras, Precio, group = Recamaras)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  scale_x_continuous(breaks = c(2, 3, 4, 5)) +
+  labs(title = "Relación entre precio y número de recámaras",
+       subtitle = "De las casas en venta en Coatepec, Veracruz",
+       y = "Precio en millones",
+       x = "Número de recámaras")
+```
+
+Esto nos muestra una clara correlación positiva entre la variable precio y la variable recámaras.
+
+### Precio y número de baños
+
+La segunda figura nos muestra que también el número de baños suele incrementar el precio de una casa en venta y que el número de baños más frecuente es 3.
+
+```{r price-bathrooms}
+#Visualizing relation between price and number of bathrooms
+casas %>% ggplot(aes(Banos, Precio, group = Banos)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  labs(title = "Relación entre precio y número de baños",
+       subtitle = "De las casas en venta en Coatepec, Veracruz",
+       y = "Precio en millones",
+       x = "Número de baños")
+```
+Esto nos muestra una clara correlación positiva entre la variable precio y la variable baños.
+
+### Precio y espacios en la cochera
+
+Al parecer, como se ve en la siguiente figura, el número de espacios en la cochera no impacta significativamente en el precio de las casas. Probablemente sea un factor que los compradores valoren poco o que los vendedores subestimen.
+
+```{r price-garage}
+#Visualizing relation between price and number of cars space in garage
+casas %>% ggplot(aes(Cochera, Precio, group = Cochera)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  labs(title = "Relación entre precio y número de autos que caben en la cochera",
+       subtitle = "De las casas en venta en Coatepec, Veracruz",
+       y = "Precio en millones",
+       x= "Autos en cochera")
+```
+
+Esto nos muestra que aunque hay una correlación positiva entre las variables, esta es muy débil.
+
+### Precio y superficie del terreno.
+
+Según nos muestra la siguiente figura, la superficie del terreno en que la casa está construida impacta positivamente en su precio. Es decir, más terreno = más dinero.
+
+```{r price-land}
+#Visualizing relation between price and land area
+casas %>%
+  ggplot(aes(Superficie, Precio)) +
+  geom_point() +
+  labs(title = "Relación entre precio y superficie",
+       subtitle = "De las casas en venta en Coatepec, Veracruz",
+       y = "Precio en millones",
+       x = "Superficie en metros cuadrados") +
+  geom_smooth(method = "lm")
+```
+
+Esto nos muestra una correlación positiva, aunque no muy fuerte.
+
+### Precio y ubicación
+
+¿Qué tanto importa dónde se ubica la casa? Location, location, location...
+
+En este caso, importa. Aunque no son diferencias abismales, el gráfico de caja muestra como varían los precios entre las diferentes colonias.
+
+```{r}
+#Visualizing relation between price and location
+casas %>% ggplot(aes(Ubicacion, Precio, group = Ubicacion)) +
+  geom_boxplot() +
+  geom_point(aes(color = Ubicacion)) +
+  labs(title = "Relación entre precio y ubicación",
+       subtitle = "De las casas en venta en Coatepec, Veracruz",
+       y = "Precio en millones",
+       x = "Ubicación")
+```
+Esto sugiere una correlación entre precio y ubicación. Como la ubicación es una variable categórica, haremos un truquillo más adelante para poder integrarla en el modelo.
+
+### Precio y todo lo demás
+
+En esta figura podemos ver como se relaciona el precio (eje Y) con el número de recámaras (tamaño del punto), la ubicación (color del punto) y la superficie del terreno (eje X). Parece ser que el patrón más claro es que mientras más grande es el punto, más arriba está.
+
+```{r}
+casas %>%
+  ggplot(aes(Superficie, Precio)) +
+  geom_point(aes(size = Recamaras, alpha = 0.5, color = Ubicacion)) +
+  labs(title = "Relación entre precio, superficie, recámaras y ubicación",
+       subtitle = "De las casas en venta en Coatepec, Veracruz",
+       y = "Precio en millones",
+       x= "Superficie en metros cuadrados")
+```
+Esto sugiere que la variable número de recámaras es la que está más relacionada con el precio y quizás la qu más influya en este ¿será cierto?
+
+### Correlación entre variables
+
+Esta figura nos muestra la correlación entre las variables. Como ya lo sospechábamos el número de recámaras es la variable más relacionada al precio, seguida del número de baños y la superficie en tercer lugar.
+
+```{r correlation}
+#Variable Dummy para Ubicación del 0 al 5 en orden de precio promedio
+casas %>%
+  group_by(Ubicacion) %>%
+  summarize("Precio promedio" = mean(Precio)) %>%
+  arrange("Precio promedio")
+
+casas_dummy <- casas %>%
+  mutate(Ubi_Dummy = recode(Ubicacion,
+                            "Campo Viejo" = "0",
+                            "Centro" = "1",
+                            "La Mata" = "2",
+                            "Nueva Nestle" = "3",
+                            "Rafael Hernandez Ochoa" = "4"),
+         Ubi_Dummy = as.numeric(Ubi_Dummy)) %>%
+  select(Precio, Recamaras, Banos, Cochera, Superficie, Ubi_Dummy)
+
+#Analyzing correlation among variables
+cor1 <- casas_dummy %>% cor()
+
+#Visualizing correlation among variables
+ggcorrplot(cor1)
+
+```
+
+Pero, ¿serán estas las mejores variables para predecir o establecer un buen precio de venta?
+
+## Modelo para predecir precio
+
+La siguiente figura nos ayudará a elegir cuáles son las variables que mejor nos ayudarían a predecir el precio de una casa en Coatepec, Veracruz. Aparentemente, la r^2 ajustada más alta (mejor ajuste de modelo) la obtendríamos considerando las variables independientes: recámaras, baños, superficie y ubicación.
+
+```{r regressors}
+#Selecting best regressors for a lineal model
+
+regsubsets1 <- regsubsets(Precio ~ Recamaras + Banos + Cochera + Superficie + Ubi_Dummy,
+                           data = casas_dummy, nbest = 1, nvmax = NULL, force.in = NULL,
+                           force.out = NULL, method = "exhaustive")
+
+#Visualizing best regressors subsets
+summary.out <- summary(regsubsets1)
+
+as.data.frame(summary.out$outmat)
+
+plot(regsubsets1, scale = "adjr2", main = "R^2 ajustada")
+
+which.max(summary.out$adjr2)
+
+```
+
+Construyendo el modelo, conseguiríamos los coeficientes que se muestran en la tabla.
+
+```{r model}
+#Linear regression model
+summary(lm(Precio ~ Recamaras + Banos + Superficie + Ubi_Dummy, data = casas_dummy))
+
+modelo <- lm(Precio ~ Recamaras + Banos + Superficie + Ubi_Dummy, data = casas_dummy)
+
+coef <- summary(modelo)$coefficients %>% as.data.frame()
+
+knitr::kable(coef, 
+ caption = "Modelo de regresión lineal múltiple")
+
+```
+
+En conclusión, para predecir o determinar el precio de venta de una casa en Coatepec, Veracruz anunciada en Viva Anuncios usaríamos la siguiente ecuación.
+
+_Precio = -0.903748 + 0.612049(Recámaras) + 0.261302(Baños) + 0.002974(Superficie) + 0.0704(Ubicación)_
+
+En caso de que les interese ahondar más en este tema, coméntenlo y lo hacemos con gusto. Todos los comentarios, sugerencias o ideas son bien recibidos.
