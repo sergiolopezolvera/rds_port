@@ -28,11 +28,13 @@ tags:
   - modelo
   - regresión
   - lineal
-  - econometría
+  - shiny
   - econometrics
   - realestate
 meta_img: images/image.png
 description: Description for the page
+runtime: shiny
+output: blogdown::html_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -54,7 +56,7 @@ Dado que no encontré una base de datos con la información de las ventas realiz
 
 El resultado del proceso fue un conjunto de 68 casas con diferentes características.
 ```{r Import-wrangling}
-map_df(1:7, function(i) {
+map_df(1:19, function(i) {
   
   # Progress indicator
   print(i)
@@ -66,40 +68,15 @@ map_df(1:7, function(i) {
   recamaras <- read_html(page) %>% html_nodes(".re-bedroom") %>% html_text() %>%.[-1]
   banos <- read_html(page) %>% html_nodes(".re-bathroom") %>% html_text() 
   autos <- read_html(page) %>% html_nodes(".car-parking") %>% html_text() 
-  superficie <- read_html(page) %>% html_nodes(".surface-area") %>% html_text() %>% .[-1]
-  ubi <- read_html(page) %>% html_nodes("#tileRedesign b") %>% html_text() %>% .[-1] 
+  superficie <- read_html(page) %>% html_nodes(".chiplets-inline-block:nth-child(8)") %>% html_text() 
+  ubi <- read_html(page) %>% html_nodes("#srpContent b") %>% html_text() %>% .[-1] 
   desc <- read_html(page) %>% html_nodes(".tile-title-text") %>% html_text() %>% .[-1] 
   
   #binding resulting dataframes
   data.frame(precio, recamaras, banos, autos, superficie, ubi, desc)
 
   #Assigning to an object
-}) -> casas_1
-
-map_df(8:19, function(i) {
-  
-  # Progress indicator
-  print(i)
-  
-  #String for consecutive pages
-  page = paste0("https://www.vivanuncios.com.mx/s-casas-en-venta/coatepec-ver/page-", i, "/v1c1293l12120p", i,"?pr=0,&ba=10&be=1&pa=grage&si=105,")
-  
-  precio <- read_html(page) %>% html_nodes(".ad-price") %>% html_text() %>%.[-1]
-  recamaras <- read_html(page) %>% html_nodes(".re-bedroom") %>% html_text() %>%.[-1]
-  banos <- read_html(page) %>% html_nodes(".re-bathroom") %>% html_text() 
-  autos <- read_html(page) %>% html_nodes(".car-parking") %>% html_text() 
-  superficie <- read_html(page) %>% html_nodes(".surface-areaV2") %>% html_text()
-  ubi <- read_html(page) %>% html_nodes("#suggestedAds b") %>% html_text()
-  desc <- read_html(page) %>% html_nodes(".tile-title-text") %>% html_text() %>% .[-1] 
-  
-  #binding resulting dataframes
-  data.frame(precio, recamaras, banos, autos, superficie, ubi, desc)
-  
-  #Assigning to an object
-}) -> casas_2
-
-#binding both data frames together
-casas <- rbind(casas_1, casas_2) 
+}) -> casas
 
 #Assigning columns names
 colnames(casas) <- c("Precio", "Recamaras", "Banos", "Cochera", "Superficie", "Ubicacion", "Descripcion")
@@ -306,5 +283,9 @@ knitr::kable(coef,
 En conclusión, para predecir o determinar el precio de venta de una casa en Coatepec, Veracruz anunciada en Viva Anuncios usaríamos la siguiente ecuación.
 
 _Precio = -0.903748 + 0.612049(Recámaras) + 0.261302(Baños) + 0.002974(Superficie) + 0.0704(Ubicación)_
+
+Para comprender mejor el modelo que resulta de este trabajo, desarrollé una aplicación web con R shiny (mi primera) que permite al usuario calcular fácilmente el precio de venta sugerido para anunciar su casa en Viva Anuncios.
+
+<iframe height="800" width="100%" frameborder="no" src="https://sergiolopezolvera.shinyapps.io/precio_coatepec/"> </iframe>
 
 En caso de que les interese ahondar más en este tema, coméntenlo y lo hacemos con gusto. Todos los comentarios, sugerencias o ideas son bien recibidos.
