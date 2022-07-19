@@ -166,8 +166,4 @@ knitr::kable(top_10, caption = "Top 10 películas de cada plataforma", align = c
 
 ```
 
-<<<<<<< HEAD
 Te agradezco la lectura y te recuerdo que cualquier observación, sugerencia o idea de proyecto es bienvenida. Y si te interesa ahondar más en este tema, tan sólo coméntalo. 
-=======
-Te agradezco la lectura y te recuerdo que cualquier observación, sugerencia o idea de proyecto es bienvenida. Y si te interesa ahondar más en este tema, tan sólo coméntalo.
->>>>>>> f338a0fcc733e1b5a667284b23f30a4d38f03e7f
