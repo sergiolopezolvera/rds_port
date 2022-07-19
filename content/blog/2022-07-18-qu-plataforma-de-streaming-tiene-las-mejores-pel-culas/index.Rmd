@@ -165,14 +165,5 @@ top_10 <- cbind(rank_10, Netflix_10, Hulu_10, Prime_10, Disney_10)
 knitr::kable(top_10, caption = "Top 10 películas de cada plataforma", align = c("c", "l", "l", "l", "l"))
 
 ```
- 
-<<<<<<< HEAD
-Te agradezco la lectura y te recuerdo que cualquier observación, sugerencia o idea de proyecto es bienvenida. Y si te interesa ahondar más en este tema, tan sólo coméntalo.
-=======
-<<<<<<< HEAD
-Te agradezco la lectura y te recuerdo que cualquier observación, sugerencia o idea de proyecto es bienvenida. Y si te interesa ahondar más en este tema, tan sólo coméntalo.
 
-=======
->>>>>>> 9663cbc4416fe070634098319b785208b8111f96
- 
->>>>>>> 61c6177cbe576ffff521669527571332c1f8dbf3
+Te agradezco la lectura y te recuerdo que cualquier observación, sugerencia o idea de proyecto es bienvenida. Y si te interesa ahondar más en este tema, tan sólo coméntalo. 
