@@ -1,0 +1,565 @@
+---
+title: ¿Qué plataforma de streaming tiene las mejores películas?
+author: Sergio López Olvera
+date: '2022-07-18'
+slug: []
+categories:
+  - R
+tags:
+  - ciencia
+  - data
+  - cleaning
+  - español
+  - ggplot2
+  - parsing
+  - plot
+  - quality
+  - tidy
+  - shiny
+  - wrangling
+  - movies
+  - netflix
+  - amazon
+  - prime
+  - video
+  - disney
+  - hulu
+  - rottentomatoes
+  - best
+  - top
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<div id="motivación" class="section level1">
+<h1>Motivación</h1>
+<p>Hace más o menos una década, cuando recién conocí Netflix, la plataforma me parecía maravillosa. Ahora, aunque quizás lo siga siendo, el crecimiento de la industria del streaming trajo consigo una pregunta que puede ser difícil de resolver:</p>
+<p>Entre tantas plataformas de streaming, <strong>¿a cuál me suscribo?</strong> o <strong>¿tengo que pagar la suscripción de todas para poder ver las mejores películas?</strong></p>
+<p>Para responder a esto, tomé de <a href="https://www.kaggle.com/datasets/ruchi798/movies-on-netflix-prime-video-hulu-and-disney">Kaggle</a> un set de datos que incluye una lista de casi 10,000 películas, las plataformas en las que se encuentran, su clasificación por edad, el año de lanzamiento y su calificación en <a href="https://www.rottentomatoes.com/">Rotten Tomatoes</a>. Posteriormente, las analicé para mostrarte algunas puntos importantes para tomar la mejor decisión.</p>
+<ul>
+<li><p>¿Cuáles son las mejores películas y en que plataforma puedes verla?</p></li>
+<li><p>¿Qué plataforma tiene más películas bien calificadas de cada clasificación de edad?</p></li>
+<li><p>¿Cuáles son las 10 mejores películas de cada plataforma?</p></li>
+</ul>
+<p>¡Además, desarrollé una web app para ayudarte a elegir que película ver según la plataforma que usas!</p>
+<pre class="r"><code>movies &lt;- read.csv(&quot;MoviesOnStreamingPlatforms.csv&quot;) %&gt;%
+  mutate(Rotten.Tomatoes = str_remove(Rotten.Tomatoes, &quot;/100&quot;),
+         Calificación = as.numeric(Rotten.Tomatoes),
+         Prime = Prime.Video,
+         Disney = Disney.,
+         Título = Title,
+         Año = Year,
+         Edad = Age) %&gt;%
+  select(Título, Año, Edad, Calificación, Netflix, Hulu, Prime, Disney)</code></pre>
+<div id="cuáles-son-las-mejores-películas-y-en-que-plataforma-puedes-verla" class="section level2">
+<h2>¿Cuáles son las mejores películas y en que plataforma puedes verla?</h2>
+<p>La siguiente tabla te muestra todas las películas con una calificación igual o mayor que <strong>90/100</strong> en <em>Rotten Tomatoes</em> y marca con una <strong>X</strong> la plataforma en la que podemos encontrarla. Con tan solo un vistazo notarás que la mayoría se encuentran en Netflix, que sigue siendo la plataforma con el mayor catálogo.</p>
+<pre class="r"><code>#Películas con puntaje igual o mayor a 90/100 y dónde encontrarlas
+
+over_90 &lt;- movies %&gt;%
+  mutate(Netflix = as.character(Netflix),
+         Netflix = str_replace(Netflix, &quot;1&quot;, &quot;X&quot;),
+         Netflix = str_replace(Netflix, &quot;0&quot;, &quot;&quot;),
+         Hulu = as.character(Hulu),
+         Hulu = str_replace(Hulu, &quot;1&quot;, &quot;X&quot;),
+         Hulu = str_replace(Hulu, &quot;0&quot;, &quot;&quot;),
+         Prime = as.character(Prime),
+         Prime = str_replace(Prime, &quot;1&quot;, &quot;X&quot;),
+         Prime = str_replace(Prime, &quot;0&quot;, &quot;&quot;),
+         Disney = as.character(Disney),
+         Disney = str_replace(Disney, &quot;1&quot;, &quot;X&quot;),
+         Disney = str_replace(Disney, &quot;0&quot;, &quot;&quot;),) %&gt;%
+  arrange(desc(Calificación)) %&gt;%
+  filter(Calificación &gt;= 90)
+knitr::kable(over_90, caption = &quot;Películas con 90 puntos o más y dónde verlas&quot;,
+             align = c(&quot;l&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;))</code></pre>
+<table>
+<caption><span id="tab:90">Table 1: </span>Películas con 90 puntos o más y dónde verlas</caption>
+<colgroup>
+<col width="65%" />
+<col width="3%" />
+<col width="3%" />
+<col width="8%" />
+<col width="5%" />
+<col width="3%" />
+<col width="4%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Título</th>
+<th align="center">Año</th>
+<th align="center">Edad</th>
+<th align="center">Calificación</th>
+<th align="center">Netflix</th>
+<th align="center">Hulu</th>
+<th align="center">Prime</th>
+<th align="center">Disney</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">The Irishman</td>
+<td align="center">2019</td>
+<td align="center">18+</td>
+<td align="center">98</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Dangal</td>
+<td align="center">2016</td>
+<td align="center">7+</td>
+<td align="center">97</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Mary Poppins</td>
+<td align="center">1964</td>
+<td align="center">all</td>
+<td align="center">96</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+</tr>
+<tr class="even">
+<td align="left">David Attenborough: A Life on Our Planet</td>
+<td align="center">2020</td>
+<td align="center">7+</td>
+<td align="center">95</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Lagaan: Once Upon a Time in India</td>
+<td align="center">2001</td>
+<td align="center">7+</td>
+<td align="center">94</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Roma</td>
+<td align="center">2018</td>
+<td align="center">18+</td>
+<td align="center">94</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">To All the Boys I’ve Loved Before</td>
+<td align="center">2018</td>
+<td align="center">13+</td>
+<td align="center">94</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">The Dark Knight</td>
+<td align="center">2008</td>
+<td align="center">13+</td>
+<td align="center">94</td>
+<td align="center"></td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">The Social Dilemma</td>
+<td align="center">2020</td>
+<td align="center">13+</td>
+<td align="center">93</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Fight Club</td>
+<td align="center">1999</td>
+<td align="center">18+</td>
+<td align="center">93</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Tumbbad</td>
+<td align="center">2018</td>
+<td align="center"></td>
+<td align="center">93</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Okja</td>
+<td align="center">2017</td>
+<td align="center">13+</td>
+<td align="center">92</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">The Ballad of Buster Scruggs</td>
+<td align="center">2018</td>
+<td align="center">16+</td>
+<td align="center">92</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">The Trial of the Chicago 7</td>
+<td align="center">2020</td>
+<td align="center">18+</td>
+<td align="center">92</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Article 15</td>
+<td align="center">2019</td>
+<td align="center">18+</td>
+<td align="center">92</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Jim &amp; Andy: The Great Beyond- Featuring a Very Special, Contractually Obligated Mention of Tony Clifton</td>
+<td align="center">2017</td>
+<td align="center">18+</td>
+<td align="center">92</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Dolemite Is My Name</td>
+<td align="center">2019</td>
+<td align="center">18+</td>
+<td align="center">92</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Mudbound</td>
+<td align="center">2017</td>
+<td align="center">18+</td>
+<td align="center">91</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Swades</td>
+<td align="center">2004</td>
+<td align="center">all</td>
+<td align="center">91</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Fyre</td>
+<td align="center">2019</td>
+<td align="center">18+</td>
+<td align="center">91</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Gully Boy</td>
+<td align="center">2019</td>
+<td align="center"></td>
+<td align="center">91</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Miss Americana</td>
+<td align="center">2020</td>
+<td align="center">18+</td>
+<td align="center">90</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Virunga</td>
+<td align="center">2014</td>
+<td align="center">16+</td>
+<td align="center">90</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Black Friday</td>
+<td align="center">2004</td>
+<td align="center">18+</td>
+<td align="center">90</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Talvar</td>
+<td align="center">2015</td>
+<td align="center">7+</td>
+<td align="center">90</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">The King</td>
+<td align="center">2019</td>
+<td align="center">18+</td>
+<td align="center">90</td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Minding the Gap</td>
+<td align="center">2018</td>
+<td align="center">18+</td>
+<td align="center">90</td>
+<td align="center"></td>
+<td align="center">X</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Chak De! India</td>
+<td align="center">2007</td>
+<td align="center">7+</td>
+<td align="center">90</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Avengers: Endgame</td>
+<td align="center">2019</td>
+<td align="center">13+</td>
+<td align="center">90</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+</tr>
+<tr class="even">
+<td align="left">Avengers: Infinity War</td>
+<td align="center">2018</td>
+<td align="center">13+</td>
+<td align="center">90</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">X</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="qué-plataforma-tiene-más-películas-bien-calificadas-de-cada-clasificación-de-edad" class="section level2">
+<h2>¿Qué plataforma tiene más películas bien calificadas de cada clasificación de edad?</h2>
+<p>Como no todas las películas son iguales y no todas son aptas para todos, ¿porqué no vemos quién tiene las mejores películas para los más grandes y los más pequeños? Esta figura muestra que plataforma tiene más películas con calificación mayor o igial que 80 en Rotten Tomatoes en cada clasificación por edad.</p>
+<pre class="r"><code># Número de películas con puntaje mayor a 80 por plataforma
+age_80 &lt;- movies %&gt;%
+  filter(Calificación &gt;= 80 &amp; Edad != &quot;&quot;) %&gt;%
+  group_by(Edad) %&gt;%
+  summarise(Netflix = sum(Netflix),
+            Hulu = sum(Hulu),
+            Prime = sum(Prime),
+            Disney = sum(Disney)) %&gt;%
+  pivot_longer(Netflix:Disney, names_to = &quot;Plataforma&quot;, values_to = &quot;Peliculas&quot;)
+
+ggplot(age_80, aes(Edad, Peliculas, fill = Plataforma)) +
+  geom_col() +
+  labs(title = &quot;Plataformas con más películas arriba de 80 puntos&quot;,
+       subtitle = &quot;Por clasificación de edades&quot;,
+       x = &quot;Clasificación por edad&quot;,
+       y = &quot;Películas&quot;) +
+  scale_x_discrete(limits = c(&quot;all&quot;, &quot;7+&quot;, &quot;13+&quot;, &quot;16+&quot;, &quot;18+&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/age_80-1.png" width="672" />
+Seguro notas que Disney tiene más de las mejores películas para toda la familia, mientras que Netflix domina en la clasificación de 18 o más</p>
+<p>¿Ya notaste que Amazon Prime Video no tiene buenas películas clasificadas como para toda la familia?</p>
+</div>
+<div id="cuáles-son-las-10-mejores-películas-de-cada-plataforma" class="section level2">
+<h2>¿Cuáles son las 10 mejores películas de cada plataforma?</h2>
+<p>Con todo esto tal vez puedas decidir más fácilmente a que servicio suscribirte. Pero, ¿qué pasa si ya estás pagando por una de estas plataformas? ¡Hay que sacarle el mayor provecho! Por esto, en la siguiente tabla vas a encontrar <strong>¡las 10 películas mejor calificadas en cada plataforma de streaming!</strong></p>
+<pre class="r"><code># 10 mejores películas en cada plataforma
+
+Netflix_10 &lt;- movies %&gt;%
+  filter(Netflix == 1) %&gt;%
+  select(Título, Calificación) %&gt;%
+  arrange(desc(Calificación)) %&gt;%
+  .[1:10,] %&gt;%
+  mutate(Netflix = Título) %&gt;%
+  select(Netflix)
+
+Hulu_10 &lt;- movies %&gt;%
+  filter(Hulu == 1) %&gt;%
+  select(Título, Calificación) %&gt;%
+  arrange(desc(Calificación)) %&gt;%
+  .[1:10,] %&gt;%
+  mutate(Hulu = Título) %&gt;%
+  select(Hulu)
+
+Prime_10 &lt;- movies %&gt;%
+  filter(Prime == 1) %&gt;%
+  select(Título, Calificación) %&gt;%
+  arrange(desc(Calificación)) %&gt;%
+  .[1:10,] %&gt;%
+  mutate(Prime = Título) %&gt;%
+  select(Prime)
+
+Disney_10 &lt;- movies %&gt;%
+  filter(Disney == 1) %&gt;%
+  select(Título, Calificación) %&gt;%
+  arrange(desc(Calificación)) %&gt;%
+  .[1:10,] %&gt;%
+  mutate(Disney = Título) %&gt;%
+  select(Disney)
+
+rank_10 &lt;- data.frame(Lugar = 1:10)
+
+top_10 &lt;- cbind(rank_10, Netflix_10, Hulu_10, Prime_10, Disney_10)
+
+knitr::kable(top_10, caption = &quot;Top 10 películas de cada plataforma&quot;, align = c(&quot;c&quot;, &quot;l&quot;, &quot;l&quot;, &quot;l&quot;, &quot;l&quot;))</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-1">Table 2: </span>Top 10 películas de cada plataforma</caption>
+<colgroup>
+<col width="5%" />
+<col width="31%" />
+<col width="15%" />
+<col width="20%" />
+<col width="26%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Lugar</th>
+<th align="left">Netflix</th>
+<th align="left">Hulu</th>
+<th align="left">Prime</th>
+<th align="left">Disney</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1</td>
+<td align="left">The Irishman</td>
+<td align="left">The Dark Knight</td>
+<td align="left">Fight Club</td>
+<td align="left">Mary Poppins</td>
+</tr>
+<tr class="even">
+<td align="center">2</td>
+<td align="left">Dangal</td>
+<td align="left">Minding the Gap</td>
+<td align="left">Tumbbad</td>
+<td align="left">Avengers: Endgame</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="left">David Attenborough: A Life on Our Planet</td>
+<td align="left">Parasite</td>
+<td align="left">Gully Boy</td>
+<td align="left">Avengers: Infinity War</td>
+</tr>
+<tr class="even">
+<td align="center">4</td>
+<td align="left">Lagaan: Once Upon a Time in India</td>
+<td align="left">Batman Begins</td>
+<td align="left">Chak De! India</td>
+<td align="left">Star Wars: A New Hope</td>
+</tr>
+<tr class="odd">
+<td align="center">5</td>
+<td align="left">Roma</td>
+<td align="left">Gone Girl</td>
+<td align="left">Honey Boy</td>
+<td align="left">Star Wars: The Empire Strikes Back</td>
+</tr>
+<tr class="even">
+<td align="center">6</td>
+<td align="left">To All the Boys I’ve Loved Before</td>
+<td align="left">Catch Me If You Can</td>
+<td align="left">The Report</td>
+<td align="left">Soul</td>
+</tr>
+<tr class="odd">
+<td align="center">7</td>
+<td align="left">The Social Dilemma</td>
+<td align="left">The Terminator</td>
+<td align="left">Alien</td>
+<td align="left">Guardians of the Galaxy</td>
+</tr>
+<tr class="even">
+<td align="center">8</td>
+<td align="left">Okja</td>
+<td align="left">Arrival</td>
+<td align="left">Borat Subsequent Moviefilm</td>
+<td align="left">The Lion King</td>
+</tr>
+<tr class="odd">
+<td align="center">9</td>
+<td align="left">The Ballad of Buster Scruggs</td>
+<td align="left">Prisoners</td>
+<td align="left">Raazi</td>
+<td align="left">WALLÂ·E</td>
+</tr>
+<tr class="even">
+<td align="center">10</td>
+<td align="left">The Trial of the Chicago 7</td>
+<td align="left">Bohemian Rhapsody</td>
+<td align="left">Snatch</td>
+<td align="left">The Avengers</td>
+</tr>
+</tbody>
+</table>
+<p>Te agradezco la lectura y te recuerdo que cualquier observación, sugerencia o idea de proyecto es bienvenida. Y si te interesa ahondar más en este tema, tan sólo coméntalo.</p>
+</div>
+</div>
