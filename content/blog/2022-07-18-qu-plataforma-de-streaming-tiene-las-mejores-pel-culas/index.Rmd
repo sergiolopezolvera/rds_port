@@ -1,0 +1,169 @@
+---
+title: ¿Qué plataforma de streaming tiene las mejores películas?
+author: Sergio López Olvera
+date: '2022-07-18'
+slug: []
+categories:
+  - R
+tags:
+  - ciencia
+  - data
+  - cleaning
+  - español
+  - ggplot2
+  - parsing
+  - plot
+  - quality
+  - tidy
+  - shiny
+  - wrangling
+  - movies
+  - netflix
+  - amazon
+  - prime
+  - video
+  - disney
+  - hulu
+  - rottentomatoes
+  - best
+  - top
+meta_img: images/image.png
+description: Description for the page
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(readr)
+
+```
+# Motivación
+
+Hace más o menos una década, cuando recién conocí Netflix, la plataforma me parecía maravillosa. Ahora, aunque quizás lo siga siendo, el crecimiento de la industria del streaming trajo consigo una pregunta que puede ser difícil de resolver:
+
+Entre tantas plataformas de streaming, **¿a cuál me suscribo?** o **¿tengo que pagar la suscripción de todas para poder ver las mejores películas?**
+
+Para responder a esto, tomé de [Kaggle](https://www.kaggle.com/datasets/ruchi798/movies-on-netflix-prime-video-hulu-and-disney) un set de datos que incluye una lista de casi 10,000 películas, las plataformas en las que se encuentran, su clasificación por edad, el año de lanzamiento y su calificación en [Rotten Tomatoes](https://www.rottentomatoes.com/). Posteriormente, las analicé para mostrarte algunas puntos importantes para tomar la mejor decisión.
+
++ ¿Cuáles son las mejores películas y en que plataforma puedes verla?
+
++ ¿Qué plataforma tiene más películas bien calificadas de cada clasificación de edad?
+
++ ¿Cuáles son las 10 mejores películas de cada plataforma?
+
+¡Además, desarrollé una web app para ayudarte a elegir que película ver según la plataforma que usas!
+
+```{r ImportAndWrangle}
+movies <- read.csv("MoviesOnStreamingPlatforms.csv") %>%
+  mutate(Rotten.Tomatoes = str_remove(Rotten.Tomatoes, "/100"),
+         Calificación = as.numeric(Rotten.Tomatoes),
+         Prime = Prime.Video,
+         Disney = Disney.,
+         Título = Title,
+         Año = Year,
+         Edad = Age) %>%
+  select(Título, Año, Edad, Calificación, Netflix, Hulu, Prime, Disney)
+
+```
+
+## ¿Cuáles son las mejores películas y en que plataforma puedes verla?
+
+La siguiente tabla te muestra todas las películas con una calificación igual o mayor que **90/100** en _Rotten Tomatoes_ y marca con una **X** la plataforma en la que podemos encontrarla. Con tan solo un vistazo notarás que la mayoría se encuentran en Netflix, que sigue siendo la plataforma con el mayor catálogo.
+
+```{r 90}
+
+#Películas con puntaje igual o mayor a 90/100 y dónde encontrarlas
+
+over_90 <- movies %>%
+  mutate(Netflix = as.character(Netflix),
+         Netflix = str_replace(Netflix, "1", "X"),
+         Netflix = str_replace(Netflix, "0", ""),
+         Hulu = as.character(Hulu),
+         Hulu = str_replace(Hulu, "1", "X"),
+         Hulu = str_replace(Hulu, "0", ""),
+         Prime = as.character(Prime),
+         Prime = str_replace(Prime, "1", "X"),
+         Prime = str_replace(Prime, "0", ""),
+         Disney = as.character(Disney),
+         Disney = str_replace(Disney, "1", "X"),
+         Disney = str_replace(Disney, "0", ""),) %>%
+  arrange(desc(Calificación)) %>%
+  filter(Calificación >= 90)
+knitr::kable(over_90, caption = "Películas con 90 puntos o más y dónde verlas",
+             align = c("l", "c", "c", "c", "c", "c", "c", "c"))
+```
+
+## ¿Qué plataforma tiene más películas bien calificadas de cada clasificación de edad?
+
+Como no todas las películas son iguales y no todas son aptas para todos, ¿porqué no vemos quién tiene las mejores películas para los más grandes y los más pequeños? Esta figura muestra que plataforma tiene más películas con calificación mayor o igial que 80 en Rotten Tomatoes en cada clasificación por edad.
+```{r age_80}
+# Número de películas con puntaje mayor a 80 por plataforma
+age_80 <- movies %>%
+  filter(Calificación >= 80 & Edad != "") %>%
+  group_by(Edad) %>%
+  summarise(Netflix = sum(Netflix),
+            Hulu = sum(Hulu),
+            Prime = sum(Prime),
+            Disney = sum(Disney)) %>%
+  pivot_longer(Netflix:Disney, names_to = "Plataforma", values_to = "Peliculas")
+
+ggplot(age_80, aes(Edad, Peliculas, fill = Plataforma)) +
+  geom_col() +
+  labs(title = "Plataformas con más películas arriba de 80 puntos",
+       subtitle = "Por clasificación de edades",
+       x = "Clasificación por edad",
+       y = "Películas") +
+  scale_x_discrete(limits = c("all", "7+", "13+", "16+", "18+"))
+
+```
+ Seguro notas que Disney tiene más de las mejores películas para toda la familia, mientras que Netflix domina en la clasificación de 18 o más
+ 
+ ¿Ya notaste que Amazon Prime Video no tiene buenas películas clasificadas como para toda la familia?
+ 
+##  ¿Cuáles son las 10 mejores películas de cada plataforma?
+
+Con todo esto tal vez puedas decidir más fácilmente a que servicio suscribirte. Pero, ¿qué pasa si ya estás pagando por una de estas plataformas? ¡Hay que sacarle el mayor provecho! Por esto, en la siguiente tabla vas a encontrar **¡las 10 películas mejor calificadas en cada plataforma de streaming!**
+```{r}
+# 10 mejores películas en cada plataforma
+
+Netflix_10 <- movies %>%
+  filter(Netflix == 1) %>%
+  select(Título, Calificación) %>%
+  arrange(desc(Calificación)) %>%
+  .[1:10,] %>%
+  mutate(Netflix = Título) %>%
+  select(Netflix)
+
+Hulu_10 <- movies %>%
+  filter(Hulu == 1) %>%
+  select(Título, Calificación) %>%
+  arrange(desc(Calificación)) %>%
+  .[1:10,] %>%
+  mutate(Hulu = Título) %>%
+  select(Hulu)
+
+Prime_10 <- movies %>%
+  filter(Prime == 1) %>%
+  select(Título, Calificación) %>%
+  arrange(desc(Calificación)) %>%
+  .[1:10,] %>%
+  mutate(Prime = Título) %>%
+  select(Prime)
+
+Disney_10 <- movies %>%
+  filter(Disney == 1) %>%
+  select(Título, Calificación) %>%
+  arrange(desc(Calificación)) %>%
+  .[1:10,] %>%
+  mutate(Disney = Título) %>%
+  select(Disney)
+
+rank_10 <- data.frame(Lugar = 1:10)
+
+top_10 <- cbind(rank_10, Netflix_10, Hulu_10, Prime_10, Disney_10)
+
+knitr::kable(top_10, caption = "Top 10 películas de cada plataforma", align = c("c", "l", "l", "l", "l"))
+
+```
+ 
+ 
