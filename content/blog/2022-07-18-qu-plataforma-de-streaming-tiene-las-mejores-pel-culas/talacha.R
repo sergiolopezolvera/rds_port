@@ -1,15 +1,15 @@
 
 library(tidyverse)
-library(rvest)
 
-movies <- read.csv("content/blog/2022-07-18-qu-plataforma-de-streaming-tiene-las-mejores-pel-culas/MoviesOnStreamingPlatforms.csv") %>%
+movies <- read.csv("MoviesOnStreamingPlatforms.csv") %>%
   mutate(Rotten.Tomatoes = str_remove(Rotten.Tomatoes, "/100"),
          Calificación = as.numeric(Rotten.Tomatoes),
          Prime = Prime.Video,
          Disney = Disney.,
          Título = Title,
          Año = Year,
-         Edad = Age) %>%
+         Edad = Age,
+         Edad = recode(Edad, "all" = "Apta para toda la familia")) %>%
   select(Título, Año, Edad, Calificación, Netflix, Hulu, Prime, Disney)
 
 head(movies)
@@ -87,3 +87,25 @@ rank_10 <- data.frame(Lugar = 1:10)
 
 cbind(rank_10, Netflix_10, Hulu_10, Prime_10, Disney_10)
 
+imdb <- read.csv("imdb_top_1000.csv") %>%
+  mutate(Título = Series_Title, Género = Genre, Calificación_IMDB = IMDB_Rating, Reseña = Overview, Poster = Poster_Link) %>%
+  select(Título, Calificación_IMDB, Género, Reseña, Poster)
+
+head(imdb)
+
+join <- movies %>%
+  inner_join(imdb) %>%
+  mutate(Rotten_Tomatoes = Calificación, IMDB = Calificación_IMDB) %>%
+  select(Título, Año, Edad, Rotten_Tomatoes, IMDB, Género, Reseña, Poster, Netflix, Hulu, Prime, Disney)
+
+head(join)
+str(join)
+
+join %>%
+  group_by(Género) %>%
+  summarise(n()) %>%
+  print(n = 95)
+
+"Action", "Adventure", "Comedy", "Drama", "Crime", "Biography", "Thriller", "Sci-Fi"
+
+géneros <- join$Género %>% str_split(",", simplify = TRUE) %>% str_trim(side = "both") %>% unique() %>% .[-12]

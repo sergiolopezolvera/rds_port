@@ -1,0 +1,220 @@
+---
+title: ¿Qué influencers dominan Instagram y TikTok?
+author: Sergio López Olvera
+date: '2022-07-25'
+slug: []
+categories:
+  - R
+tags:
+  - cleaning
+  - ciencia
+  - data
+  - ggplot2
+  - gis
+  - mining
+  - wrangling
+  - influencer
+  - social
+  - media
+  - instagram
+  - tiktok
+  - facebook
+meta_img: images/image.png
+description: Description for the page
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+```{r read}
+#Reading data
+instagram <- read_csv("instagram_june_2022.csv")
+tiktok <- read_csv("tiktok_june_2022.csv")
+youtube <- read_csv("youtube_june_2022.csv")
+```
+# Motivación
+
+Las redes sociales tienen una influencia innegable en la vida de una gran parte de la población mundial. Las estrellas de estos medios, conocidas como **influencers**, marcan tendencias en la forma en que vestimos, actuamos, nos comunicamos y consumimos. Y aunque actualmente cualquier individuo puede volverse viral de la noche a la mañana, existe un exclusivo grupo de personas que son los reyes y las reinas de dichas plataformas.
+
+Este análisis intenta averiguar quiénes son las personas más influyentes de las redes sociales respondiendo algunas preguntas:
+
+* ¿Quiénes son los influencers con más seguidores en _TikTok_ e _Instagram_?
+* ¿Quiénes reciben más likes y comentarios?
+* ¿Cuáles son las categorías que predominan entre los influencers más grandes?
+* ¿Cuáles son los únicos influencers que dominan ambas redes?
+
+Para este análisis, utilicé un dataset publicado en [Kaggle](https://www.kaggle.com/datasets/ramjasmaurya/top-1000-social-media-channels)
+
+
+```{r wrangling}
+#Wrangling data
+instagram <- instagram %>%
+  mutate(Cuenta = `instagram name`,
+         Nombre = `influencer name`,
+         Subscribers_M = str_remove(`Subscribers count`, "M"),
+         Suscriptores_Millones = as.integer(Subscribers_M),
+         Likes_proxy = str_replace(`Likes avg`, "K", " 1000"),
+         Likes_proxy = str_replace(Likes_proxy, "M", " 1000000"),
+         Likes_proxy = str_split(Likes_proxy, " ", simplify = TRUE),
+         Likes = as.integer(Likes_proxy[,1]),
+         Likes_q = as.integer(Likes_proxy[,2]),
+         Likes_promedio_Miles = (Likes*Likes_q)/1000,
+         Comments_proxy = str_replace(`Comments avg.`, "K", " 1000"),
+         Comments_proxy = str_replace(Comments_proxy, "M", " 1000000"),
+         Comments_proxy = str_split(Comments_proxy, " ", simplify = TRUE),
+         Comments = as.integer(Comments_proxy[,1]),
+         Comments_q = as.integer(Comments_proxy[,2]),
+         Comentarios_promedio_Miles = (Comments*Comments_q)/1000,
+         País_fan1 = `Views avg.`,
+         Categoría = Category_1) %>%
+  select(Cuenta, Nombre, Suscriptores_Millones, Likes_promedio_Miles, Comentarios_promedio_Miles, País_fan1, Categoría)
+
+tiktok <- tiktok %>%
+  mutate(Cuenta = Tiktoker,
+         Nombre = `influencer name`,
+         Subscribers_M = str_remove(`Subscribers count`, "M"),
+         Suscriptores_Millones = as.integer(Subscribers_M),
+         Likes_proxy = str_replace(`Likes avg`, "K", " 1000"),
+         Likes_proxy = str_replace(Likes_proxy, "M", " 1000000"),
+         Likes_proxy = str_split(Likes_proxy, " ", simplify = TRUE),
+         Likes = as.integer(Likes_proxy[,1]),
+         Likes_q = as.integer(Likes_proxy[,2]),
+         Likes_promedio_Miles = (Likes*Likes_q)/1000,
+         Comments_proxy = str_replace(`Comments avg.`, "K", " 1000"),
+         Comments_proxy = str_replace(Comments_proxy, "M", " 1000000"),
+         Comments_proxy = str_split(Comments_proxy, " ", simplify = TRUE),
+         Comments = as.integer(Comments_proxy[,1]),
+         Comments_q = as.integer(Comments_proxy[,2]),
+         Comentarios_promedio_Miles = (Comments*Comments_q)/1000,
+         País_fan1 = `Views avg.`) %>%
+  select(Cuenta, Nombre, Suscriptores_Millones, Likes_promedio_Miles, Comentarios_promedio_Miles, País_fan1)
+```
+# Instagram
+
+## ¿Quiénes son los influencers más grandes en Instagram?
+
+Este gráfico nos muestra a los influencers con más seguidores en Instagram. Podemos ver que Cristiano Ronaldo lidera el marcador con una ventaja significativa, seguido de numerosas personalidades del deporte, la televisión y la música.
+```{r instagram_top_subs}
+#Top 20 Subscribers
+instagram %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[2:11,] %>%
+  ggplot(aes(Suscriptores_Millones, Cuenta, fill = Suscriptores_Millones)) +
+  geom_col() +
+  labs(x = "Millones de suscriptores",
+       y = "Cuenta en Instagram",
+       title = "Influencers con más seguidores en Instagram",
+       subtitle = "En junio del 2022",
+         ) +
+  scale_y_discrete(limits = c("justinbieber", "khloekardashian", "beyonce", "arianagrande", "kimkardashian",
+                              "therock", "selenagomez", "leomessi", "kyliejenner", "cristiano")) +
+  theme(legend.position = "Null")
+```
+
+## ¿Qué cuentas reciben más likes y comentarios en Instagram?
+
+Sin embargo, los seguidores no lo son todo. Las interacciones en forma de likes y comentarios que reciben las cuentas en sus publicaciones son determinantes en su relevancia. En el siguiente gráfico podemos ver que CR7 lidera tanto en likes y empata en el primer lugar en comentarios con Lionel Messi.
+
+Tras ellos, Kendall Jenner y Taylor Swift opacan a otras cuentas que cuentan con muchos más suscriptores.
+```{r instagram_top_likes_and_comments}
+instagram %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[2:21,] %>%
+  ggplot(aes(Likes_promedio_Miles, Comentarios_promedio_Miles, color = Suscriptores_Millones)) +
+  geom_label(aes(label = Cuenta)) +
+  labs(x = "Miles de likes por post",
+       y = "Miles de comentarios por post",
+       title = "Influencers con más likes y comentarios en Instagram",
+       subtitle = "En junio del 2022") +
+  theme(legend.position = "Null")
+```
+
+## ¿Cuáles son las categorías más comunes en el top 20 de influencers en Instagram?
+
+Por lo anterior, podríamos pensar que los deportes son la categoría predominante entre los influencers más relevantes de Instagram. Pero el siguiente gráfico nos muestra que no es así, ya que la música es la categoría que ocupa el primer lugar.
+```{r instagram_top_categorías}
+instagram %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[2:21,] %>%
+  select(Cuenta, Suscriptores_Millones, Categoría) %>%
+  group_by(Categoría) %>%
+  summarise(Mill_sus = sum(Suscriptores_Millones)) %>%
+  arrange(desc(Mill_sus)) %>%
+  ggplot(aes(Mill_sus, Categoría, fill = Mill_sus)) +
+  geom_col() +
+  labs(title = "Categorías más populares en el top 20 de influencers en instagram",
+       subtitle = "En junio del 2022",
+       caption = "Número de seguidores de las 20 cuentas más grandes agrupados por categoría",
+       x = "Millones de suscriptores") +
+  scale_y_discrete(limits = c("Lifestyle", "Fitness & Gym", "Nature & landscapes",
+                              "Modeling", "Clothing & Outfits", "Cinema & Actors/actresses",
+                              "Fashion", "Sports with a ball", "Music")) +
+  theme(legend.position = "Null")
+
+```
+
+# Tiktok
+
+A pesar de las similitudes entre TikTok y el formato Reels de Instagram, los personajes dominantes entre ambas plataformas son muy diferentes.
+
+## ¿Quiénes son los influencers más grandes en TikTok?
+
+Podemos ver en este gráfico que a diferencia de Instagram, en el top 10 de TikTok no figuran deportistas ni músicos. ¡Los mayores influencers de TikTok se han formado en la misma red! Bueno, menos La Roca.
+```{r TikTok_top_20}
+tiktok %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[1:10,] %>%
+  ggplot(aes(Suscriptores_Millones, Cuenta, fill = Suscriptores_Millones)) +
+  geom_col() +
+  labs(x = "Millones de seguidores",
+       y = "Cuenta en TikTok",
+       title = "Influencers con más seguidores en TikTok",
+       subtitle = "En junio del 2022") +
+  theme(legend.position = "Null") +
+  scale_y_discrete(limits = c("ox_zung", "therock", "domelipa", "cznburak", "kimberly.loaiza",
+                              "zachking", "addisonre", "bellapoarch", "charlidamelio", "khaby.lame"))
+```
+
+
+## ¿Qué cuentas reciben más likes y comentarios en TikTok?
+
+Pero, ¿quiénes reciben más interacciones? Mientras que Khaby lidera en likes, Charli Damelio lo hace en comentarios. Algo particularmente interesante es que la interacción en forma de comentarios en TikTok es muchísimo menor que en Instagram, esto puede deberse al formato y diseño de la aplicación.
+```{r TikTok_likes_and_comments}
+tiktok %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[1:20,] %>%
+  ggplot(aes(Likes_promedio_Miles, Comentarios_promedio_Miles, color = Suscriptores_Millones)) +
+  geom_label(aes(label = Cuenta)) +
+  labs(x = "Miles de likes por post",
+       y = "Miles de comentarios por post",
+       title = "Influencers con más likes y comentarios en Instagram",
+       subtitle = "En junio del 2022") +
+  theme(legend.position = "Null")
+```
+
+
+# Instagram + TikTok
+
+A pesar de las diferencias observadas entre Instagram y TikTok, ¿hay similitudes?, ¿existen influencers que hayan logrado dominar ambas redes? La respuesta es sí, las únicas tres personas que se encuentran en el top 20 de ambas plataformas son:
+
+```{r Influencers_ambos_tops}
+
+rank_instagram <- instagram %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[2:21,] %>%
+  mutate(Rank_Instagram = c(1:20)) %>%
+  select(Rank_Instagram, Cuenta)
+
+rank_tiktok <- tiktok %>%
+  arrange(desc(Suscriptores_Millones)) %>%
+  .[2:21,] %>%
+  mutate(Rank_TikTok = c(1:20)) %>%
+  select(Rank_TikTok, Cuenta)
+
+rank_vs <-inner_join(rank_instagram, rank_tiktok) %>%
+  select(Cuenta, Rank_Instagram, Rank_TikTok)
+
+knitr::kable(rank_vs, caption = "Influencers en el top 20 de Instagram y TikTok en junio de 2022", align = c("l", "c", "c"))
+```
+

@@ -1,0 +1,249 @@
+---
+title: ¿Qué influencers dominan Instagram y TikTok?
+author: Sergio López Olvera
+date: '2022-07-25'
+slug: []
+categories:
+  - R
+tags:
+  - cleaning
+  - ciencia
+  - data
+  - ggplot2
+  - gis
+  - mining
+  - wrangling
+  - influencer
+  - social
+  - media
+  - instagram
+  - tiktok
+  - facebook
+meta_img: images/image.png
+description: Description for the page
+---
+
+
+
+<pre class="r"><code>#Reading data
+instagram &lt;- read_csv(&quot;instagram_june_2022.csv&quot;)</code></pre>
+<pre><code>## Rows: 1022 Columns: 8
+## -- Column specification --------------------------------------------------------
+## Delimiter: &quot;,&quot;
+## chr (8): instagram name, influencer name, Category_1, Category_2, Subscriber...
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>tiktok &lt;- read_csv(&quot;tiktok_june_2022.csv&quot;)</code></pre>
+<pre><code>## Rows: 1007 Columns: 7
+## -- Column specification --------------------------------------------------------
+## Delimiter: &quot;,&quot;
+## chr (7): Tiktoker, influencer name, Subscribers count, Views avg., Likes avg...
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>youtube &lt;- read_csv(&quot;youtube_june_2022.csv&quot;)</code></pre>
+<pre><code>## Rows: 1021 Columns: 9
+## -- Column specification --------------------------------------------------------
+## Delimiter: &quot;,&quot;
+## chr (9): channel name, youTuber, Category, Category_2, Subscribers count, Co...
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div id="motivación" class="section level1">
+<h1>Motivación</h1>
+<p>Las redes sociales tienen una influencia innegable en la vida de una gran parte de la población mundial. Las estrellas de estos medios, conocidas como <strong>influencers</strong>, marcan tendencias en la forma en que vestimos, actuamos, nos comunicamos y consumimos. Y aunque actualmente cualquier individuo puede volverse viral de la noche a la mañana, existe un exclusivo grupo de personas que son los reyes y las reinas de dichas plataformas.</p>
+<p>Este análisis intenta averiguar quiénes son las personas más influyentes de las redes sociales respondiendo algunas preguntas:</p>
+<ul>
+<li>¿Quiénes son los influencers con más seguidores en <em>TikTok</em> e <em>Instagram</em>?</li>
+<li>¿Quiénes reciben más likes y comentarios?</li>
+<li>¿Cuáles son las categorías que predominan entre los influencers más grandes?</li>
+<li>¿Cuáles son los únicos influencers que dominan ambas redes?</li>
+</ul>
+<p>Para este análisis, utilicé un dataset publicado en <a href="https://www.kaggle.com/datasets/ramjasmaurya/top-1000-social-media-channels">Kaggle</a></p>
+<pre class="r"><code>#Wrangling data
+instagram &lt;- instagram %&gt;%
+  mutate(Cuenta = `instagram name`,
+         Nombre = `influencer name`,
+         Subscribers_M = str_remove(`Subscribers count`, &quot;M&quot;),
+         Suscriptores_Millones = as.integer(Subscribers_M),
+         Likes_proxy = str_replace(`Likes avg`, &quot;K&quot;, &quot; 1000&quot;),
+         Likes_proxy = str_replace(Likes_proxy, &quot;M&quot;, &quot; 1000000&quot;),
+         Likes_proxy = str_split(Likes_proxy, &quot; &quot;, simplify = TRUE),
+         Likes = as.integer(Likes_proxy[,1]),
+         Likes_q = as.integer(Likes_proxy[,2]),
+         Likes_promedio_Miles = (Likes*Likes_q)/1000,
+         Comments_proxy = str_replace(`Comments avg.`, &quot;K&quot;, &quot; 1000&quot;),
+         Comments_proxy = str_replace(Comments_proxy, &quot;M&quot;, &quot; 1000000&quot;),
+         Comments_proxy = str_split(Comments_proxy, &quot; &quot;, simplify = TRUE),
+         Comments = as.integer(Comments_proxy[,1]),
+         Comments_q = as.integer(Comments_proxy[,2]),
+         Comentarios_promedio_Miles = (Comments*Comments_q)/1000,
+         País_fan1 = `Views avg.`,
+         Categoría = Category_1) %&gt;%
+  select(Cuenta, Nombre, Suscriptores_Millones, Likes_promedio_Miles, Comentarios_promedio_Miles, País_fan1, Categoría)
+
+tiktok &lt;- tiktok %&gt;%
+  mutate(Cuenta = Tiktoker,
+         Nombre = `influencer name`,
+         Subscribers_M = str_remove(`Subscribers count`, &quot;M&quot;),
+         Suscriptores_Millones = as.integer(Subscribers_M),
+         Likes_proxy = str_replace(`Likes avg`, &quot;K&quot;, &quot; 1000&quot;),
+         Likes_proxy = str_replace(Likes_proxy, &quot;M&quot;, &quot; 1000000&quot;),
+         Likes_proxy = str_split(Likes_proxy, &quot; &quot;, simplify = TRUE),
+         Likes = as.integer(Likes_proxy[,1]),
+         Likes_q = as.integer(Likes_proxy[,2]),
+         Likes_promedio_Miles = (Likes*Likes_q)/1000,
+         Comments_proxy = str_replace(`Comments avg.`, &quot;K&quot;, &quot; 1000&quot;),
+         Comments_proxy = str_replace(Comments_proxy, &quot;M&quot;, &quot; 1000000&quot;),
+         Comments_proxy = str_split(Comments_proxy, &quot; &quot;, simplify = TRUE),
+         Comments = as.integer(Comments_proxy[,1]),
+         Comments_q = as.integer(Comments_proxy[,2]),
+         Comentarios_promedio_Miles = (Comments*Comments_q)/1000,
+         País_fan1 = `Views avg.`) %&gt;%
+  select(Cuenta, Nombre, Suscriptores_Millones, Likes_promedio_Miles, Comentarios_promedio_Miles, País_fan1)</code></pre>
+<pre><code>## Warning in mask$eval_all_mutate(quo): NAs introduced by coercion</code></pre>
+</div>
+<div id="instagram" class="section level1">
+<h1>Instagram</h1>
+<div id="quiénes-son-los-influencers-más-grandes-en-instagram" class="section level2">
+<h2>¿Quiénes son los influencers más grandes en Instagram?</h2>
+<p>Este gráfico nos muestra a los influencers con más seguidores en Instagram. Podemos ver que Cristiano Ronaldo lidera el marcador con una ventaja significativa, seguido de numerosas personalidades del deporte, la televisión y la música.</p>
+<pre class="r"><code>#Top 20 Subscribers
+instagram %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[2:11,] %&gt;%
+  ggplot(aes(Suscriptores_Millones, Cuenta, fill = Suscriptores_Millones)) +
+  geom_col() +
+  labs(x = &quot;Millones de suscriptores&quot;,
+       y = &quot;Cuenta en Instagram&quot;,
+       title = &quot;Influencers con más seguidores en Instagram&quot;,
+       subtitle = &quot;En junio del 2022&quot;,
+         ) +
+  scale_y_discrete(limits = c(&quot;justinbieber&quot;, &quot;khloekardashian&quot;, &quot;beyonce&quot;, &quot;arianagrande&quot;, &quot;kimkardashian&quot;,
+                              &quot;therock&quot;, &quot;selenagomez&quot;, &quot;leomessi&quot;, &quot;kyliejenner&quot;, &quot;cristiano&quot;)) +
+  theme(legend.position = &quot;Null&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/instagram_top_subs-1.png" width="672" /></p>
+</div>
+<div id="qué-cuentas-reciben-más-likes-y-comentarios-en-instagram" class="section level2">
+<h2>¿Qué cuentas reciben más likes y comentarios en Instagram?</h2>
+<p>Sin embargo, los seguidores no lo son todo. Las interacciones en forma de likes y comentarios que reciben las cuentas en sus publicaciones son determinantes en su relevancia. En el siguiente gráfico podemos ver que CR7 lidera tanto en likes y empata en el primer lugar en comentarios con Lionel Messi.</p>
+<p>Tras ellos, Kendall Jenner y Taylor Swift opacan a otras cuentas que cuentan con muchos más suscriptores.</p>
+<pre class="r"><code>instagram %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[2:21,] %&gt;%
+  ggplot(aes(Likes_promedio_Miles, Comentarios_promedio_Miles, color = Suscriptores_Millones)) +
+  geom_label(aes(label = Cuenta)) +
+  labs(x = &quot;Miles de likes por post&quot;,
+       y = &quot;Miles de comentarios por post&quot;,
+       title = &quot;Influencers con más likes y comentarios en Instagram&quot;,
+       subtitle = &quot;En junio del 2022&quot;) +
+  theme(legend.position = &quot;Null&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/instagram_top_likes_and_comments-1.png" width="672" /></p>
+</div>
+<div id="cuáles-son-las-categorías-más-comunes-en-el-top-20-de-influencers-en-instagram" class="section level2">
+<h2>¿Cuáles son las categorías más comunes en el top 20 de influencers en Instagram?</h2>
+<p>Por lo anterior, podríamos pensar que los deportes son la categoría predominante entre los influencers más relevantes de Instagram. Pero el siguiente gráfico nos muestra que no es así, ya que la música es la categoría que ocupa el primer lugar.</p>
+<pre class="r"><code>instagram %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[2:21,] %&gt;%
+  select(Cuenta, Suscriptores_Millones, Categoría) %&gt;%
+  group_by(Categoría) %&gt;%
+  summarise(Mill_sus = sum(Suscriptores_Millones)) %&gt;%
+  arrange(desc(Mill_sus)) %&gt;%
+  ggplot(aes(Mill_sus, Categoría, fill = Mill_sus)) +
+  geom_col() +
+  labs(title = &quot;Categorías más populares en el top 20 de influencers en instagram&quot;,
+       subtitle = &quot;En junio del 2022&quot;,
+       caption = &quot;Número de seguidores de las 20 cuentas más grandes agrupados por categoría&quot;,
+       x = &quot;Millones de suscriptores&quot;) +
+  scale_y_discrete(limits = c(&quot;Lifestyle&quot;, &quot;Fitness &amp; Gym&quot;, &quot;Nature &amp; landscapes&quot;,
+                              &quot;Modeling&quot;, &quot;Clothing &amp; Outfits&quot;, &quot;Cinema &amp; Actors/actresses&quot;,
+                              &quot;Fashion&quot;, &quot;Sports with a ball&quot;, &quot;Music&quot;)) +
+  theme(legend.position = &quot;Null&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/instagram_top_categorías-1.png" width="672" /></p>
+</div>
+</div>
+<div id="tiktok" class="section level1">
+<h1>Tiktok</h1>
+<p>A pesar de las similitudes entre TikTok y el formato Reels de Instagram, los personajes dominantes entre ambas plataformas son muy diferentes.</p>
+<div id="quiénes-son-los-influencers-más-grandes-en-tiktok" class="section level2">
+<h2>¿Quiénes son los influencers más grandes en TikTok?</h2>
+<p>Podemos ver en este gráfico que a diferencia de Instagram, en el top 10 de TikTok no figuran deportistas ni músicos. ¡Los mayores influencers de TikTok se han formado en la misma red! Bueno, menos La Roca.</p>
+<pre class="r"><code>tiktok %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[1:10,] %&gt;%
+  ggplot(aes(Suscriptores_Millones, Cuenta, fill = Suscriptores_Millones)) +
+  geom_col() +
+  labs(x = &quot;Millones de seguidores&quot;,
+       y = &quot;Cuenta en TikTok&quot;,
+       title = &quot;Influencers con más seguidores en TikTok&quot;,
+       subtitle = &quot;En junio del 2022&quot;) +
+  theme(legend.position = &quot;Null&quot;) +
+  scale_y_discrete(limits = c(&quot;ox_zung&quot;, &quot;therock&quot;, &quot;domelipa&quot;, &quot;cznburak&quot;, &quot;kimberly.loaiza&quot;,
+                              &quot;zachking&quot;, &quot;addisonre&quot;, &quot;bellapoarch&quot;, &quot;charlidamelio&quot;, &quot;khaby.lame&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/TikTok_top_20-1.png" width="672" /></p>
+</div>
+<div id="qué-cuentas-reciben-más-likes-y-comentarios-en-tiktok" class="section level2">
+<h2>¿Qué cuentas reciben más likes y comentarios en TikTok?</h2>
+<p>Pero, ¿quiénes reciben más interacciones? Mientras que Khaby lidera en likes, Charli Damelio lo hace en comentarios. Algo particularmente interesante es que la interacción en forma de comentarios en TikTok es muchísimo menor que en Instagram, esto puede deberse al formato y diseño de la aplicación.</p>
+<pre class="r"><code>tiktok %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[1:20,] %&gt;%
+  ggplot(aes(Likes_promedio_Miles, Comentarios_promedio_Miles, color = Suscriptores_Millones)) +
+  geom_label(aes(label = Cuenta)) +
+  labs(x = &quot;Miles de likes por post&quot;,
+       y = &quot;Miles de comentarios por post&quot;,
+       title = &quot;Influencers con más likes y comentarios en Instagram&quot;,
+       subtitle = &quot;En junio del 2022&quot;) +
+  theme(legend.position = &quot;Null&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/TikTok_likes_and_comments-1.png" width="672" /></p>
+</div>
+</div>
+<div id="instagram-tiktok" class="section level1">
+<h1>Instagram + TikTok</h1>
+<p>A pesar de las diferencias observadas entre Instagram y TikTok, ¿hay similitudes?, ¿existen influencers que hayan logrado dominar ambas redes? La respuesta es sí, las únicas tres personas que se encuentran en el top 20 de ambas plataformas son:</p>
+<pre class="r"><code>rank_instagram &lt;- instagram %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[2:21,] %&gt;%
+  mutate(Rank_Instagram = c(1:20)) %&gt;%
+  select(Rank_Instagram, Cuenta)
+
+rank_tiktok &lt;- tiktok %&gt;%
+  arrange(desc(Suscriptores_Millones)) %&gt;%
+  .[2:21,] %&gt;%
+  mutate(Rank_TikTok = c(1:20)) %&gt;%
+  select(Rank_TikTok, Cuenta)
+
+rank_vs &lt;-inner_join(rank_instagram, rank_tiktok) %&gt;%
+  select(Cuenta, Rank_Instagram, Rank_TikTok)</code></pre>
+<pre><code>## Joining, by = &quot;Cuenta&quot;</code></pre>
+<pre class="r"><code>knitr::kable(rank_vs, caption = &quot;Influencers en el top 20 de Instagram y TikTok en junio de 2022&quot;, align = c(&quot;l&quot;, &quot;c&quot;, &quot;c&quot;))</code></pre>
+<table>
+<caption>(#tab:Influencers_ambos_tops)Influencers en el top 20 de Instagram y TikTok en junio de 2022</caption>
+<thead>
+<tr class="header">
+<th align="left">Cuenta</th>
+<th align="center">Rank_Instagram</th>
+<th align="center">Rank_TikTok</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">kyliejenner</td>
+<td align="center">2</td>
+<td align="center">16</td>
+</tr>
+<tr class="even">
+<td align="left">selenagomez</td>
+<td align="center">4</td>
+<td align="center">17</td>
+</tr>
+<tr class="odd">
+<td align="left">therock</td>
+<td align="center">5</td>
+<td align="center">8</td>
+</tr>
+</tbody>
+</table>
+</div>
