@@ -13,7 +13,7 @@ On this page you will find many data related projects i've done out of personal 
 
 Feel free to dive in and look around, i'm sure you'll find something useful. Plus, you can see all the code i wrote for each project!
 
-## [My Resume](/resume/)
+## [My Resume](/resume/) 
 
 Well... it's all the boring stuff: education, work experience, skills, etc...
 
