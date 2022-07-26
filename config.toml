@@ -1,0 +1,99 @@
+baseurl = "https://sergiolopezolvera.netlify.app/"
+languageCode = "en"
+title = "Sergio López Olvera"
+theme = "soho"
+DefaultContentLanguage = "en"
+enableInlineShortcodes = true
+summarylength = 10
+enableEmoji = true
+paginate = 5
+ignoreErrors = ["error-remote-getjson"]
+
+[params]
+title = "Sergio Lopez Olvera"
+description = "Data Scientist"
+# gravatar = "soho@example.com"
+images = ["images/profile.jpg"]
+profilePicture = "images/profile.jpg"
+copyright = "Sergio López Olvera"
+license = "CC BY-SA 4.0"
+licenseURL = "https://creativecommons.org/licenses/by-sa/4.0"
+builtWith = true
+mainSections = ["post"]
+
+## Set custom theme color.
+# themeColor = "#fc2803"
+
+  [[params.socialIcons]]
+  icon = "fa-linkedin"
+  title = "Linkedin"
+  url = "https://linkedin.com/in/sergiolopezolvera"
+
+  [[params.socialIcons]]
+  icon = "fa-github"
+  title = "GitHub"
+  url = "https://github.com/sergiolopezolvera"
+  
+  [[params.socialIcons]]
+  icon = "fa-instagram"
+  title = "Instagram"
+  url = "https://www.instagram.com/sergiolopezolvera13/"
+
+
+[menu]
+
+  [[menu.main]]
+  name = "Portfolio"
+  weight = 100
+  identifier = "portfolio"
+  url = "/blog/"
+
+  [[menu.main]]
+  name = "Resume"
+  weight = 100
+  identifier = "resume"
+  url = "/resume/"
+  
+  [[menu.main]]
+  name = "Certificates"
+  weight = 200
+  identifier = "certificates"
+  url = "/certificates/"  
+
+[taxonomies]
+category = "categories"
+tag = "tags"
+series = "series"
+
+[privacy]
+
+  [privacy.vimeo]
+    disabled = false
+    simple = true
+
+  [privacy.twitter]
+    disabled = false
+    enableDNT = true
+    simple = true
+
+  [privacy.instagram]
+    disabled = false
+    simple = true
+
+  [privacy.youtube]
+    disabled = false
+    privacyEnhanced = true
+
+[services]
+
+  [services.instagram]
+    disableInlineCSS = true
+
+  [services.twitter]
+    disableInlineCSS = true
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      # needed to render raw HTML (e.g. <sub>, <sup>, <kbd>, <mark>)
+      unsafe = true

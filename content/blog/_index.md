@@ -1,5 +1,4 @@
 ---
-description: Someone's blog
-menu: main
-title: Blog
+description: Sergio López Olvera's portfolio
+title: Portfolio
 ---
