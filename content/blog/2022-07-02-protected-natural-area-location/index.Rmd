@@ -128,4 +128,3 @@ Such polygons were projected onto a map to visualize their spatial distribution.
          x = "latitude",
          y = "longitude")
 ```
-
