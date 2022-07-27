@@ -70,7 +70,7 @@ highlightjslanguages = ["r", "python", "stan"]
   weight = 400
   url = "/certificates/"
   
-[taxonomies]
+[taxonomies] 
 category = "categories"
 tag = "tags"
 series = "series"
