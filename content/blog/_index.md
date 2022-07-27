@@ -1,4 +1,6 @@
----
-description: Sergio López Olvera's portfolio
-title: Portfolio
----
++++
+aliases = ["posts", "articles", "blog", "showcase", "docs"]
+title = "Portfolio"
+author = "Sergio López Olvera"
+tags = ["index"]
++++

@@ -1,18 +1,17 @@
----
-date: "2020-01-01"
-description: A description of the page
-title: Resume
----
-
-# Summary
-
++++
+title = "Resume"
+description = "Sergio López Olvera's resume"
+date = "2019-02-28"
+aliases = ["about-me", "about-sergio", "CV", "curriculum"]
+author = "Sergio López Olvera"
++++
 
 Civil and Environmental Engineer, Environmental Management Specialist and Master’s
 degree student with a background in hydraulics, construction, geographic information
 systems and Data Science.
 
 
-# Experience
+## Experience
 
 
 * Research Intern | **Water, Forests and Watersheds Observatory for the State of Veracruz** | _09/2020 - current_
@@ -72,7 +71,7 @@ management.
 activities.
 
 
-# Education
+## Education
 
 * Professional certificate in Data Science | **HarvardX** | _current_
 
@@ -89,7 +88,7 @@ activities.
 * Civil Engineering | **Universidad Técnica Superior de Xalapa**
 
 
-# Skills
+## Skills
 
 
 * Data Analysis - R y STATA
